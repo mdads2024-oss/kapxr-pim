@@ -11,6 +11,21 @@ node_modules
 dist
 dist-ssr
 *.local
+.cache
+
+# Tests
+coverage
+playwright-report
+test-results
+
+# Build caches
+.vite
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.*
+!.env.example
 
 # Editor directories and files
 .vscode/*
