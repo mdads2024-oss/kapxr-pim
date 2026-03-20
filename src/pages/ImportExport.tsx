@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
+import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, Download, FileSpreadsheet, Clock, CheckCircle, AlertTriangle } from "lucide-react";
@@ -9,8 +10,16 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function ImportExport() {
   const { toast } = useToast();
-  const { data: history = [] } = useImportExportHistoryQuery();
+  const { data: history = [], isLoading } = useImportExportHistoryQuery();
   const createHistoryMutation = useCreateImportExportHistoryMutation();
+
+  if (isLoading) {
+    return (
+      <AppLayout title="Import / Export">
+        <AppLoader message="Loading activity…" />
+      </AppLayout>
+    );
+  }
 
   const addHistory = async (type: "Import" | "Export") => {
     const now = new Date();

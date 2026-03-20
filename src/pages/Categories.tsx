@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
+import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +34,7 @@ import { notifySuccess } from "@/lib/notify";
 export default function Categories() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { data: categories = [] } = useCategoriesQuery();
+  const { data: categories = [], isLoading } = useCategoriesQuery();
   const createCategoryMutation = useCreateCategoryMutation();
   const updateCategoryMutation = useUpdateCategoryMutation();
   const deleteCategoryMutation = useDeleteCategoryMutation();
@@ -88,6 +89,14 @@ export default function Categories() {
     await deleteCategoryMutation.mutateAsync(id);
     notifySuccess(toast, "Category deleted");
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout title="Categories">
+        <AppLoader message="Loading categories…" />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout title="Categories">

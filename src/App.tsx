@@ -17,6 +17,7 @@ import ImportExport from "./pages/ImportExport";
 import Analytics from "./pages/Analytics";
 import Team from "./pages/Team";
 import SettingsPage from "./pages/Settings";
+import BillingPage from "./pages/Billing";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 import SignIn from "./pages/SignIn";
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/team" element={<Team />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/billing" element={<BillingPage />} />
             <Route path="/logout" element={<SignOut />} />
           </Route>
 

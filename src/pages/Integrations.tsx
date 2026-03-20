@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
+import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,7 @@ import { notifySuccess } from "@/lib/notify";
 
 export default function Integrations() {
   const { toast } = useToast();
-  const { data: integrations = [] } = useIntegrationsQuery();
+  const { data: integrations = [], isLoading } = useIntegrationsQuery();
   const updateIntegrationMutation = useUpdateIntegrationMutation();
   const [configureOpen, setConfigureOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -40,6 +41,14 @@ export default function Integrations() {
     setApiKeysByIntegration(next);
     window.localStorage.setItem("kapxr:integration-api-keys", JSON.stringify(next));
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout title="Integrations">
+        <AppLoader message="Loading integrations…" />
+      </AppLayout>
+    );
+  }
 
   const handleToggle = async (id: number, connected: boolean) => {
     if (connected && !apiKeysByIntegration[id]?.trim()) {

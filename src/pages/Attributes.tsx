@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
+import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,7 @@ const typeColor: Record<string, string> = {
 export default function Attributes() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { data: attributes = [] } = useAttributesQuery();
+  const { data: attributes = [], isLoading } = useAttributesQuery();
   const updateAttributeMutation = useUpdateAttributeMutation();
   const deleteAttributeMutation = useDeleteAttributeMutation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -80,6 +81,14 @@ export default function Attributes() {
     await deleteAttributeMutation.mutateAsync(id);
     notifySuccess(toast, "Attribute deleted");
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout title="Attributes">
+        <AppLoader message="Loading attributes…" />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout title="Attributes">

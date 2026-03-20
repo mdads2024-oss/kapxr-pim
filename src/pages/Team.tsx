@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
+import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +35,7 @@ const inviteStatusColor: Record<"Active" | "Invited", string> = {
 
 export default function Team() {
   const { toast } = useToast();
-  const { data: members = [] } = useTeamMembersQuery();
+  const { data: members = [], isLoading } = useTeamMembersQuery();
   const createTeamMemberMutation = useCreateTeamMemberMutation();
   const deleteTeamMemberMutation = useDeleteTeamMemberMutation();
   const updateTeamMemberMutation = useUpdateTeamMemberMutation();
@@ -51,6 +52,14 @@ export default function Team() {
   const [page, setPage] = useState(1);
   const pageSize = 8;
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
+  if (isLoading) {
+    return (
+      <AppLayout title="Team">
+        <AppLoader message="Loading team…" />
+      </AppLayout>
+    );
+  }
 
   const totalPages = Math.max(1, Math.ceil(members.length / pageSize));
   const safePage = Math.min(page, totalPages);

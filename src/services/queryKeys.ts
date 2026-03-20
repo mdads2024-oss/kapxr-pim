@@ -7,4 +7,6 @@ export const queryKeys = {
   importExportHistory: () => ["import-export-history"] as const,
   analyticsMetrics: () => ["analytics-metrics"] as const,
   teamMembers: () => ["team-members"] as const,
+  billingPlans: () => ["billing-plans"] as const,
+  billingSubscription: () => ["billing-subscription"] as const,
 };

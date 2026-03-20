@@ -1,20 +1,31 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
-import { FormEvent, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { FormEvent, useMemo, useState } from "react";
 import { notifyError, notifySuccess } from "@/lib/notify";
 import { useToast } from "@/hooks/use-toast";
 import { signInSession } from "@/lib/auth";
 import { CheckCircle2, Sparkles, Rocket, Users } from "lucide-react";
 import { motion } from "framer-motion";
+import { setSelectedPlan } from "@/lib/billingSelection";
+import type { BillingInterval } from "@/types/billing";
 
 export default function SignUp() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const selectedPlan = useMemo(() => {
+    const plan = searchParams.get("plan");
+    const interval = searchParams.get("interval");
+    const isPlanValid = plan === "starter" || plan === "growth" || plan === "pro";
+    const isIntervalValid = interval === "monthly" || interval === "yearly";
+    if (!isPlanValid || !isIntervalValid) return null;
+    return { planCode: plan, interval: interval as BillingInterval };
+  }, [searchParams]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -27,9 +38,13 @@ export default function SignUp() {
       return;
     }
 
+    if (selectedPlan) {
+      setSelectedPlan(selectedPlan);
+    }
+
     signInSession({ name: name.trim(), email: email.trim() });
     notifySuccess(toast, "Account created", "Your workspace is ready.");
-    navigate("/app");
+    navigate(selectedPlan ? "/settings" : "/app");
   };
 
   return (

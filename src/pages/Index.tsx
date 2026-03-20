@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
+import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Image, FolderTree, AlertTriangle, TrendingUp, Clock, CheckCircle, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -28,9 +29,10 @@ const item = {
 
 export default function Index() {
   const navigate = useNavigate();
-  const { data: products = [] } = useProductsQuery();
-  const { data: assets = [] } = useAssetsQuery();
-  const { data: categories = [] } = useCategoriesQuery();
+  const { data: products = [], isLoading: productsLoading } = useProductsQuery();
+  const { data: assets = [], isLoading: assetsLoading } = useAssetsQuery();
+  const { data: categories = [], isLoading: categoriesLoading } = useCategoriesQuery();
+  const isLoading = productsLoading || assetsLoading || categoriesLoading;
 
   const incompleteCount = products.filter((p) => p.completeness < 100).length;
   const stats = [
@@ -52,6 +54,14 @@ export default function Index() {
     size: a.size,
     date: a.date,
   }));
+
+  if (isLoading) {
+    return (
+      <AppLayout title="Dashboard">
+        <AppLoader message="Loading dashboard…" />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout title="Dashboard">

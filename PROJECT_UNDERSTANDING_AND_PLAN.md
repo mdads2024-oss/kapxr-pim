@@ -419,3 +419,166 @@ For KapxrPIM, "best" means:
 - accessible and reliable under heavy data usage,
 - backend-ready without frontend rewrites,
 - maintainable by team scale over time.
+
+## 15) New Requirement Added: Pricing + PayPal Recurring Payments
+
+You are correct to add this now. Subscription and payment architecture should be planned early so plan selection, trial, checkout, and billing state are consistent across landing + app.
+
+### What I understand from your new requirement
+
+1. Add a production-grade **Pricing section/page** on the landing experience.
+2. Let users choose plan (Starter/Growth/Pro style tiers).
+3. Integrate **PayPal recurring payments** for subscription billing.
+4. Ensure architecture is backend-ready, secure, and scalable (not a temporary UI-only patch).
+5. Update this understanding/plan doc first, then implement in phases.
+
+### Scope we should deliver
+
+- Landing pricing cards (monthly/yearly toggle, feature comparison, CTA by plan).
+- Plan selection flow:
+  - Unauthenticated user -> Sign up -> checkout
+  - Authenticated trial user -> upgrade flow
+- Checkout integration with recurring billing consent.
+- Post-payment subscription activation in Kapxr workspace.
+- Billing state surfaces in app (plan, renewal date, status, upgrade/downgrade/cancel).
+
+## 16) PayPal Recurring Architecture Plan (System Design View)
+
+### 16.1 Functional requirements
+
+- User can view pricing and choose plan.
+- User can start recurring subscription via PayPal.
+- System records subscription status and entitlements.
+- Failed/expired/canceled payments update account status correctly.
+- Admin can view current plan and billing metadata in settings.
+
+### 16.2 Non-functional requirements
+
+- Security-first: no secret keys in frontend.
+- Idempotent payment processing (webhook retries safe).
+- Event-driven subscription state sync (eventual consistency <= seconds).
+- Auditable billing timeline for support/debugging.
+- Provider abstraction so Stripe/other gateways can be added later.
+
+### 16.3 High-level components
+
+1. **Frontend (this repo)**
+   - Pricing UI + checkout entry points
+   - Billing status pages
+2. **Backend billing service (next phase)**
+   - Setup token/payment token orchestration
+   - Subscription and invoice persistence
+   - Webhook receiver and signature validation
+3. **PayPal APIs**
+   - Setup/payment token flows and recurring payment details
+4. **Data store**
+   - Organizations, subscriptions, payment methods, billing events
+
+### 16.4 Data model (backend-facing contract)
+
+- `Plan`:
+  - `id`, `code`, `name`, `billingInterval`, `price`, `currency`, `limits`, `features`
+- `Subscription`:
+  - `id`, `organizationId`, `planId`, `status`, `currentPeriodStart`, `currentPeriodEnd`, `cancelAtPeriodEnd`
+- `PaymentMethod`:
+  - `id`, `organizationId`, `provider`, `providerTokenRef`, `payerRef`, `last4` (if available), `brand`
+- `BillingEvent`:
+  - `id`, `organizationId`, `type`, `providerEventId`, `payloadHash`, `processedAt`
+- `Invoice/Charge`:
+  - `id`, `subscriptionId`, `amount`, `currency`, `status`, `providerChargeId`, `chargedAt`
+
+### 16.5 API contract (frontend <-> backend)
+
+- `GET /billing/plans` -> pricing catalog
+- `POST /billing/checkout/session` -> create recurring checkout context for selected plan
+- `POST /billing/checkout/confirm` -> finalize after payer approval redirect
+- `GET /billing/subscription` -> current org subscription state
+- `POST /billing/subscription/cancel` -> cancel at period end (or immediate per policy)
+- `POST /billing/subscription/change-plan` -> upgrade/downgrade with proration policy
+
+### 16.6 PayPal flow mapping
+
+Follow PayPal recurring guidance:
+
+1. Create setup token with recurring metadata (`usage_pattern`, `billing_plan`).
+2. Get payer approval in PayPal flow.
+3. Convert setup token to payment token.
+4. Use payment token (`vault_id`) for recurring charges/orders.
+5. Handle provider events via webhook and update subscription state.
+
+Reference: [PayPal Recurring Payments Integration](https://developer.paypal.com/studio/checkout/standard/integrate/recurring)
+
+### 16.7 Reliability and consistency strategy
+
+- Webhook processing must be idempotent (`providerEventId` unique).
+- Store raw event + normalized event for auditability.
+- Async reconciliation job for missed webhook cases.
+- Frontend uses React Query invalidation after checkout completion.
+- Subscription state in app driven by backend source-of-truth, not local guess.
+
+### 16.8 Security controls
+
+- Frontend uses only public client configuration.
+- All token creation/exchange happens server-side.
+- Verify PayPal webhook signatures on backend.
+- Protect billing endpoints with org/user auth and role checks.
+- Never log secrets or full provider payloads with sensitive fields.
+
+## 17) Landing Pricing UX Plan
+
+### UX requirements
+
+- Premium pricing section on landing:
+  - clear tier differentiation
+  - monthly/yearly toggle
+  - "Most Popular" highlight
+  - transparent feature and limits matrix
+- CTA states:
+  - `Start Free Trial`
+  - `Choose Plan`
+  - `Contact Sales` for enterprise
+- Trust blocks:
+  - refund/cancel policy snippet
+  - secure checkout badges
+  - optional FAQ accordion (billing questions)
+
+### Conversion-focused behavior
+
+- Keep plan cards above fold (or linked from top nav).
+- Preserve selected plan through signup/login redirects.
+- Route-aware CTA:
+  - logged out -> signup with preselected plan
+  - logged in -> direct checkout/upgrade
+
+## 18) Implementation Phases for This New Scope
+
+### Phase A (Frontend now, mock-first)
+
+1. Add pricing section in landing with plan catalog from config/service.
+2. Add selected-plan persistence during auth routing.
+3. Add billing UI in settings (current plan, status, renew date) using mock service.
+4. Keep provider interface:
+   - `BillingProvider`
+   - `MockBillingProvider`
+   - future `ApiBillingProvider`
+
+### Phase B (Backend + real PayPal)
+
+1. Implement billing backend service and persistence.
+2. Integrate PayPal setup token/payment token flow.
+3. Add webhook endpoint and idempotent event processor.
+4. Replace mock billing provider with API provider.
+
+### Phase C (Hardening)
+
+1. Add retries, reconciliation, and observability dashboards.
+2. Add invoice history + downloadable receipts.
+3. Add proration and plan-change edge-case handling.
+
+## 19) Definition of Done for Pricing + Payments
+
+- User can pick a plan from landing and complete recurring subscription flow.
+- Subscription status and limits reflect correctly in-app.
+- Cancellations and renewals are reflected without manual intervention.
+- Billing failures are visible and recoverable.
+- Architecture supports adding another gateway without rewriting UI.

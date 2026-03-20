@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
+import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, TrendingUp, Eye, FileCheck } from "lucide-react";
 import { motion } from "framer-motion";
@@ -20,10 +21,11 @@ import {
 const metricIcons = [FileCheck, TrendingUp, Eye, BarChart3];
 
 export default function Analytics() {
-  const { data: metrics = [] } = useAnalyticsMetricsQuery();
-  const { data: products = [] } = useProductsQuery();
-  const { data: assets = [] } = useAssetsQuery();
-  const { data: categories = [] } = useCategoriesQuery();
+  const { data: metrics = [], isLoading: metricsLoading } = useAnalyticsMetricsQuery();
+  const { data: products = [], isLoading: productsLoading } = useProductsQuery();
+  const { data: assets = [], isLoading: assetsLoading } = useAssetsQuery();
+  const { data: categories = [], isLoading: categoriesLoading } = useCategoriesQuery();
+  const isLoading = metricsLoading || productsLoading || assetsLoading || categoriesLoading;
 
   const statusData = [
     { status: "Published", count: products.filter((p) => p.status === "Published").length, fill: "hsl(var(--success))" },
@@ -39,6 +41,14 @@ export default function Analytics() {
   ];
 
   const categoryData = categories.slice(0, 6).map((c) => ({ name: c.name, products: c.products }));
+
+  if (isLoading) {
+    return (
+      <AppLayout title="Analytics">
+        <AppLoader message="Loading analytics…" />
+      </AppLayout>
+    );
+  }
 
   const trendData = [
     { month: "Jan", products: Math.max(products.length - 6, 0), assets: Math.max(assets.length - 5, 0) },

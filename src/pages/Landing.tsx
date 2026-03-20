@@ -29,6 +29,9 @@ import kapxrLogo from "@/assets/kapxr-logo.png";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { notifyError, notifySuccess } from "@/lib/notify";
+import { useBillingPlansQuery } from "@/hooks/useBillingQueries";
+import { setSelectedPlan } from "@/lib/billingSelection";
+import type { BillingInterval } from "@/types/billing";
 
 const features = [
   {
@@ -81,13 +84,21 @@ const item = {
 export default function Landing() {
   const shouldReduceMotion = useReducedMotion();
   const { toast } = useToast();
-  const [activeSection, setActiveSection] = useState<"features" | "services" | "about" | "cta">("features");
+  const { data: plans = [] } = useBillingPlansQuery();
+  const [activeSection, setActiveSection] = useState<"features" | "services" | "about" | "pricing" | "cta">("features");
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [isSubmittingNewsletter, setIsSubmittingNewsletter] = useState(false);
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
   const springX = useSpring(pointerX, { stiffness: 120, damping: 20, mass: 0.2 });
   const springY = useSpring(pointerY, { stiffness: 120, damping: 20, mass: 0.2 });
+  const pagePointerX = useMotionValue(0);
+  const pagePointerY = useMotionValue(0);
+  const pageSpringX = useSpring(pagePointerX, { stiffness: 80, damping: 22, mass: 0.4 });
+  const pageSpringY = useSpring(pagePointerY, { stiffness: 80, damping: 22, mass: 0.4 });
+  const pageGlowX = useTransform(pageSpringX, (x) => x - 170);
+  const pageGlowY = useTransform(pageSpringY, (y) => y - 170);
   const rotateX = useTransform(springY, [-16, 16], [4, -4]);
   const rotateY = useTransform(springX, [-16, 16], [-4, 4]);
   const { scrollYProgress } = useScroll();
@@ -107,6 +118,17 @@ export default function Landing() {
   const resetPanelPointer = () => {
     pointerX.set(0);
     pointerY.set(0);
+  };
+
+  const handleLandingMouseMove = (event: MouseEvent<HTMLDivElement>) => {
+    pagePointerX.set(event.clientX);
+    pagePointerY.set(event.clientY);
+  };
+
+  const resetLandingMouse = () => {
+    if (typeof window === "undefined") return;
+    pagePointerX.set(window.innerWidth / 2);
+    pagePointerY.set(window.innerHeight / 3);
   };
 
   const NEWSLETTER_STORAGE_KEY = "kapxr:newsletter-subscribers";
@@ -160,10 +182,11 @@ export default function Landing() {
   };
 
   useEffect(() => {
-    const sectionIds: Array<"features" | "services" | "about" | "cta"> = [
+    const sectionIds: Array<"features" | "services" | "about" | "pricing" | "cta"> = [
       "features",
       "services",
       "about",
+      "pricing",
       "cta",
     ];
 
@@ -174,7 +197,7 @@ export default function Landing() {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
 
         if (visible[0]) {
-          setActiveSection(visible[0].target.id as "features" | "services" | "about" | "cta");
+          setActiveSection(visible[0].target.id as "features" | "services" | "about" | "pricing" | "cta");
         }
       },
       {
@@ -192,9 +215,26 @@ export default function Landing() {
     return () => observer.disconnect();
   }, []);
 
+  const getPlanPrice = (monthlyPrice: number, yearlyPrice: number) => {
+    return billingInterval === "yearly" ? yearlyPrice : monthlyPrice;
+  };
+
+  const buildSignupLink = (planCode: "starter" | "growth" | "pro") =>
+    `/signup?plan=${planCode}&interval=${billingInterval}`;
+
   return (
-    <div className="min-h-screen bg-background overflow-hidden landing-animated-bg">
+    <div
+      className="min-h-screen bg-background overflow-hidden landing-animated-bg"
+      onMouseMove={handleLandingMouseMove}
+      onMouseLeave={resetLandingMouse}
+    >
       <div className="pointer-events-none fixed inset-0 -z-10">
+        <motion.div
+          className="absolute h-[340px] w-[340px] rounded-full bg-primary/14 blur-3xl"
+          style={{ x: pageGlowX, y: pageGlowY }}
+          animate={shouldReduceMotion ? { opacity: 0 } : { opacity: [0.24, 0.38, 0.24] }}
+          transition={{ duration: 4.6, repeat: Infinity, ease: "easeInOut" }}
+        />
         <motion.div
           className="absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl"
           animate={shouldReduceMotion ? { opacity: 0.45 } : { scale: [1, 1.08, 1], opacity: [0.45, 0.7, 0.45] }}
@@ -263,6 +303,22 @@ export default function Landing() {
               )}
             </a>
             <a
+              href="#pricing"
+              className={cn(
+                "transition-colors relative pb-1",
+                activeSection === "pricing" ? "text-foreground" : "hover:text-foreground"
+              )}
+            >
+              Pricing
+              {activeSection === "pricing" && (
+                <motion.span
+                  layoutId="landing-nav-active-underline"
+                  className="absolute left-0 -bottom-0 h-0.5 w-full rounded-full bg-primary"
+                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                />
+              )}
+            </a>
+            <a
               href="#cta"
               className={cn(
                 "transition-colors relative pb-1",
@@ -280,10 +336,10 @@ export default function Landing() {
             </a>
           </nav>
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm">
+            <Button asChild size="sm" className="brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
               <Link to="/signin">Sign in</Link>
             </Button>
-            <Button asChild size="sm" className="gap-1.5">
+            <Button asChild size="sm" className="gap-1.5 brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
               <Link to="/signup">
                 Get started <ArrowRight className="h-3.5 w-3.5" />
               </Link>
@@ -309,15 +365,15 @@ export default function Landing() {
               KapxrPIM helps teams centralize product data, streamline content operations, and publish faster across channels with confidence.
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="gap-2">
+              <Button asChild size="lg" className="gap-2 brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
                 <Link to="/signup">
                   Start Free Trial <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline">
+              <Button asChild size="lg" className="brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
                 <Link to="/signin">Already have an account?</Link>
               </Button>
-              <Button asChild size="lg" variant="ghost" className="gap-2">
+              <Button asChild size="lg" className="gap-2 brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
                 <Link to="/signin">
                   <CirclePlay className="h-4 w-4" />
                   Watch walkthrough
@@ -598,6 +654,132 @@ export default function Landing() {
           </Card>
         </section>
 
+        <section id="pricing" className="mx-auto w-full max-w-7xl px-4 py-10 md:px-6">
+          <div className="mb-6 text-center">
+            <Badge variant="secondary" className="mb-2">Pricing</Badge>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Plans That Fit Your Business</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Recurring subscription plans powered by PayPal billing agreement flow.
+            </p>
+            <div className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-border/70 bg-background/90 p-1.5 shadow-sm">
+              <Button
+                type="button"
+                size="sm"
+                className={cn(
+                  "h-9 min-w-[122px] rounded-lg px-5 landing-btn-motion transition-all",
+                  billingInterval === "monthly"
+                    ? "brand-gradient-button shadow-[0_10px_18px_-12px_hsl(var(--primary)/0.7)]"
+                    : "bg-background text-muted-foreground border border-border/70 hover:bg-muted/40"
+                )}
+                onClick={() => setBillingInterval("monthly")}
+              >
+                Monthly
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className={cn(
+                  "h-9 min-w-[122px] rounded-lg px-5 landing-btn-motion transition-all",
+                  billingInterval === "yearly"
+                    ? "brand-gradient-button shadow-[0_10px_18px_-12px_hsl(var(--primary)/0.7)]"
+                    : "bg-background text-muted-foreground border border-border/70 hover:bg-muted/40"
+                )}
+                onClick={() => setBillingInterval("yearly")}
+              >
+                Annually
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {plans.map((plan) => {
+              const isStarter = plan.code === "starter";
+              const isGrowth = plan.code === "growth";
+              const isPro = plan.code === "pro";
+              return (
+                <Card
+                  key={plan.code}
+                  className={cn(
+                    "group relative overflow-hidden border p-0 transition-transform duration-300 hover:-translate-y-1",
+                    isStarter && "border-border/70 bg-card shadow-sm",
+                    isGrowth && "border-border/70 landing-gradient-surface text-foreground shadow-sm",
+                    isPro && "border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-background text-foreground shadow-sm",
+                    "hover:shadow-[0_24px_36px_-28px_hsl(var(--primary)/0.55)]"
+                  )}
+                >
+                  <motion.div
+                    className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    initial={false}
+                    animate={shouldReduceMotion ? { opacity: 0 } : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                    transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(120deg, hsl(var(--primary)/0.10), transparent 40%, hsl(var(--primary)/0.16), transparent 78%)",
+                      backgroundSize: "180% 180%",
+                    }}
+                  />
+                  {isGrowth && (
+                    <div className="absolute right-3 top-3">
+                      <Badge className="bg-primary/15 text-primary border border-primary/30">Most Popular</Badge>
+                    </div>
+                  )}
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-3xl">{plan.name} Plan</CardTitle>
+                    <p className="text-5xl font-bold tracking-tight">
+                      ${getPlanPrice(plan.monthlyPrice, plan.yearlyPrice)}
+                      <span className="ml-1 text-xl font-medium text-muted-foreground">/month</span>
+                    </p>
+                    <CardDescription className="text-sm text-muted-foreground">
+                      {plan.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pb-5">
+                    <Button
+                      asChild
+                      className="w-full brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity"
+                    >
+                      <Link
+                        to={buildSignupLink(plan.code)}
+                        onClick={() => setSelectedPlan({ planCode: plan.code, interval: billingInterval })}
+                      >
+                        {isStarter ? "Book a Demo" : `Get started with ${plan.name}`}
+                      </Link>
+                    </Button>
+
+                    <div className="flex items-center gap-2">
+                      <div className="h-px flex-1 bg-border/80" />
+                      <span className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground">
+                        WHAT YOU WILL GET
+                      </span>
+                      <div className="h-px flex-1 bg-border/80" />
+                    </div>
+
+                    <ul className="grid grid-cols-1 gap-x-4 gap-y-2.5 sm:grid-cols-2">
+                      {plan.features.map((feature) => (
+                        <li
+                          key={feature}
+                          className="inline-flex items-start gap-2 text-sm text-foreground/90"
+                        >
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
+                          {feature}
+                        </li>
+                      ))}
+                      <li className="inline-flex items-start gap-2 text-sm text-foreground/90">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
+                        {plan.seatsIncluded} Employee Profiles
+                      </li>
+                      <li className="inline-flex items-start gap-2 text-sm text-foreground/90">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
+                        {plan.connectorsIncluded} Channel Connectors
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+
         <section id="cta" className="mx-auto w-full max-w-7xl px-4 pb-16 md:px-6">
           <Card className="landing-gradient-surface relative overflow-hidden">
             <motion.div
@@ -619,10 +801,10 @@ export default function Landing() {
                 <p className="text-sm text-muted-foreground">Start your KapxrPIM workspace and onboard your team in minutes.</p>
               </div>
               <div className="flex items-center gap-2">
-                <Button asChild variant="outline">
+                <Button asChild className="brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
                   <Link to="/signin">Sign in</Link>
                 </Button>
-                <Button asChild className="gap-1.5">
+                <Button asChild className="gap-1.5 brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
                   <Link to="/signup">Start Free</Link>
                 </Button>
               </div>
@@ -695,7 +877,7 @@ export default function Landing() {
                     placeholder="Enter your work email"
                     className="h-9 sm:w-64"
                   />
-                  <Button size="sm" className="h-9" type="submit" disabled={isSubmittingNewsletter}>
+                  <Button size="sm" className="h-9 brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity" type="submit" disabled={isSubmittingNewsletter}>
                     {isSubmittingNewsletter ? "Subscribing..." : "Subscribe"}
                   </Button>
                 </form>

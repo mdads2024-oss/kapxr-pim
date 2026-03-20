@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
+import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,7 +57,7 @@ const typeColor: Record<string, string> = {
 
 export default function Assets() {
   const { toast } = useToast();
-  const { data: assets = [] } = useAssetsQuery();
+  const { data: assets = [], isLoading } = useAssetsQuery();
   const createAssetMutation = useCreateAssetMutation();
   const updateAssetMutation = useUpdateAssetMutation();
   const deleteAssetMutation = useDeleteAssetMutation();
@@ -120,6 +121,14 @@ export default function Assets() {
     await deleteAssetMutation.mutateAsync(id);
     notifySuccess(toast, "Asset deleted");
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout title="Digital Assets">
+        <AppLoader message="Loading assets…" />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout title="Digital Assets">

@@ -7,7 +7,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAssetsQuery, useCategoriesQuery, useProductsQuery } from "@/hooks/usePimQueries";
 import { cn } from "@/lib/utils";
-import { applyUiDensityToDocument, getUiDensity, getUiDensityEventName, type UiDensity } from "@/lib/uiDensity";
 import { applyThemeToDocument, getTheme, getThemeEventName, setTheme, type AppTheme } from "@/lib/theme";
 
 interface AppLayoutProps {
@@ -19,36 +18,22 @@ export function AppLayout({ children, title }: AppLayoutProps) {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [uiDensity, setUiDensityState] = useState<UiDensity>(() => getUiDensity());
   const [theme, setThemeState] = useState<AppTheme>(() => getTheme());
   const { data: products = [] } = useProductsQuery();
   const { data: assets = [] } = useAssetsQuery();
   const { data: categories = [] } = useCategoriesQuery();
 
   useEffect(() => {
-    applyUiDensityToDocument(uiDensity);
-  }, [uiDensity]);
-
-  useEffect(() => {
     applyThemeToDocument(theme);
   }, [theme]);
 
   useEffect(() => {
-    const densityEventName = getUiDensityEventName();
     const themeEventName = getThemeEventName();
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key === "kapxr:ui-density") {
-        setUiDensityState(getUiDensity());
-      }
       if (event.key === "kapxr:theme") {
         setThemeState(getTheme());
       }
-    };
-
-    const handleDensityChange = (event: Event) => {
-      const customEvent = event as CustomEvent<UiDensity>;
-      setUiDensityState(customEvent.detail ?? getUiDensity());
     };
 
     const handleThemeChange = (event: Event) => {
@@ -64,13 +49,11 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     };
 
     window.addEventListener("storage", handleStorage);
-    window.addEventListener(densityEventName, handleDensityChange as EventListener);
     window.addEventListener(themeEventName, handleThemeChange as EventListener);
     mediaQuery.addEventListener("change", handleSystemThemeChange);
 
     return () => {
       window.removeEventListener("storage", handleStorage);
-      window.removeEventListener(densityEventName, handleDensityChange as EventListener);
       window.removeEventListener(themeEventName, handleThemeChange as EventListener);
       mediaQuery.removeEventListener("change", handleSystemThemeChange);
     };
@@ -132,27 +115,19 @@ export function AppLayout({ children, title }: AppLayoutProps) {
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header
-            className={cn(
-              "flex items-center justify-between border-b bg-card",
-              uiDensity === "compact" ? "h-14 px-3 md:px-4" : "h-[60px] px-4 md:px-5"
-            )}
+            className="flex h-14 items-center justify-between border-b bg-card px-3 md:px-4"
           >
             <div className="flex items-center gap-3">
               <SidebarTrigger />
               {title && (
-                <h1 className={cn("font-semibold tracking-tight", uiDensity === "compact" ? "text-base md:text-lg" : "text-lg md:text-xl")}>
+                <h1 className="text-base font-semibold tracking-tight md:text-lg">
                   {title}
                 </h1>
               )}
             </div>
             <div className="flex items-center gap-3">
               <div className="relative hidden md:block">
-                <Search
-                  className={cn(
-                    "absolute left-2.5 text-muted-foreground",
-                    uiDensity === "compact" ? "top-2 h-3.5 w-3.5" : "top-2.5 h-4 w-4"
-                  )}
-                />
+                <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
@@ -164,10 +139,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
                     }
                   }}
                   placeholder="Search products, assets..."
-                  className={cn(
-                    "bg-secondary border-0",
-                    uiDensity === "compact" ? "w-60 lg:w-64 pl-8 h-8 text-sm" : "w-64 lg:w-72 pl-9 h-9 text-sm"
-                  )}
+                  className="h-8 w-60 border-0 bg-secondary pl-8 text-sm lg:w-64"
                 />
                 {isFocused && searchTerm.trim().length > 0 && (
                   <div className="absolute z-50 mt-2 w-full rounded-md border bg-popover p-1 shadow-md">
@@ -218,10 +190,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
             </div>
           </header>
           <main
-            className={cn(
-              "flex-1 overflow-auto app-content",
-              uiDensity === "compact" ? "p-4 md:p-5 text-[13px]" : "p-5 md:p-6 text-sm"
-            )}
+            className="app-content flex-1 overflow-auto p-4 text-[13px] md:p-5"
           >
             {children}
           </main>

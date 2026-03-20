@@ -38,14 +38,32 @@ Default local URL is usually [http://localhost:8080](http://localhost:8080) (or 
 See `.env.example`:
 
 - `VITE_PIM_DATA_SOURCE=mock` - use local mock provider and storage
+- `VITE_BILLING_DATA_SOURCE=mock` - use mock billing/subscription provider
 - `VITE_PIM_DATA_SOURCE=api` - use API provider (requires `VITE_API_BASE_URL`)
-- `VITE_API_BASE_URL` - backend base URL when using `api` mode
+- `VITE_BILLING_DATA_SOURCE=api` - use backend billing provider (PayPal orchestration from backend)
+- `VITE_API_BASE_URL` - backend base URL (e.g. `http://localhost:3000` for mock PayPal server)
+- `VITE_PAYPAL_CLIENT_ID` - PayPal sandbox/live client ID for real checkout (optional)
+- `VITE_PAYPAL_USE_MOCK=true` - use demo flow (no PayPal popup) when no client ID
 
 > Never commit `.env` files. Only commit `.env.example`.
+
+## PayPal Checkout Integration
+
+Per [PayPal Standard Checkout](https://developer.paypal.com/studio/checkout/standard/integrate):
+
+- **React**: Uses `@paypal/react-paypal-js` with `createOrder` (backend) and `onApprove` (backend capture).
+- **Mock Node server**: `npm run server` starts a mock backend at `http://localhost:3000` with:
+  - `POST /api/paypal/orders` - create order (returns mock order ID)
+  - `POST /api/paypal/orders/:id/capture` - capture order
+
+**Demo mode** (default): No `VITE_PAYPAL_CLIENT_ID` → custom "Pay with PayPal" button that calls the mock server (or simulates a delay if no server).
+
+**Live mode**: Set `VITE_PAYPAL_CLIENT_ID` and point `VITE_API_BASE_URL` at a backend that calls real PayPal create/capture. Use sandbox credentials for testing.
 
 ## Scripts
 
 - `npm run dev` - start development server
+- `npm run server` - start mock PayPal server (port 3000)
 - `npm run build` - create production build
 - `npm run build:dev` - development-mode build
 - `npm run preview` - preview production build locally

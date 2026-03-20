@@ -9,6 +9,7 @@ import {
   BarChart3,
   Upload,
   Plug,
+  CreditCard,
   LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -44,6 +45,7 @@ const manageItems = [
 ];
 
 const settingsItems = [
+  { title: "Billing", url: "/billing", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Sign Out", url: "/logout", icon: LogOut },
 ];

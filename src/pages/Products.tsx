@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
+import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +40,7 @@ const statusColor: Record<string, string> = {
 export default function Products() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { data: products = [] } = useProductsQuery();
+  const { data: products = [], isLoading } = useProductsQuery();
   const createProductMutation = useCreateProductMutation();
   const updateProductMutation = useUpdateProductMutation();
   const deleteProductMutation = useDeleteProductMutation();
@@ -71,6 +72,14 @@ export default function Products() {
   useEffect(() => {
     setPage(1);
   }, [searchTerm, statusFilter]);
+
+  if (isLoading) {
+    return (
+      <AppLayout title="Products">
+        <AppLoader message="Loading products…" />
+      </AppLayout>
+    );
+  }
 
   const paginatedProducts = useMemo(() => {
     const start = (safePage - 1) * pageSize;

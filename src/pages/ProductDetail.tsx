@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AppLoader } from "@/components/shared/AppLoader";
 import { ArrowLeft, Save, MoreHorizontal, Copy, Trash2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -82,8 +83,8 @@ export default function ProductDetail() {
 
   if (isLoading) {
     return (
-      <AppLayout>
-        <div className="text-sm text-muted-foreground">Loading product...</div>
+      <AppLayout title="Product">
+        <AppLoader message="Loading product…" />
       </AppLayout>
     );
   }
