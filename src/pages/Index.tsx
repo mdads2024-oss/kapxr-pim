@@ -4,28 +4,12 @@ import { Package, Image, FolderTree, AlertTriangle, TrendingUp, Clock, CheckCirc
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
-
-const stats = [
-  { label: "Total Products", value: "2,847", icon: Package, change: "+12%", trend: "up" },
-  { label: "Digital Assets", value: "14,392", icon: Image, change: "+8%", trend: "up" },
-  { label: "Categories", value: "156", icon: FolderTree, change: "+3", trend: "up" },
-  { label: "Incomplete Items", value: "43", icon: AlertTriangle, change: "-15%", trend: "down" },
-];
-
-const recentProducts = [
-  { name: "Wireless Headphones Pro", sku: "WHP-001", status: "Complete", completeness: 100 },
-  { name: "USB-C Hub Adapter", sku: "UCH-042", status: "In Review", completeness: 85 },
-  { name: "Ergonomic Keyboard", sku: "EKB-103", status: "Draft", completeness: 45 },
-  { name: "4K Monitor Stand", sku: "4KM-220", status: "Complete", completeness: 100 },
-  { name: "Bluetooth Speaker Mini", sku: "BSM-087", status: "In Review", completeness: 72 },
-];
-
-const recentAssets = [
-  { name: "hero-banner-spring.jpg", type: "Image", size: "2.4 MB", date: "2 hours ago" },
-  { name: "product-video-headphones.mp4", type: "Video", size: "48 MB", date: "5 hours ago" },
-  { name: "catalog-2024.pdf", type: "Document", size: "12 MB", date: "1 day ago" },
-  { name: "brand-guidelines-v3.pdf", type: "Document", size: "8.2 MB", date: "2 days ago" },
-];
+import { useNavigate } from "react-router-dom";
+import {
+  useAssetsQuery,
+  useCategoriesQuery,
+  useProductsQuery,
+} from "@/hooks/usePimQueries";
 
 const statusColor: Record<string, string> = {
   Complete: "bg-success/10 text-success border-success/20",
@@ -43,6 +27,32 @@ const item = {
 };
 
 export default function Index() {
+  const navigate = useNavigate();
+  const { data: products = [] } = useProductsQuery();
+  const { data: assets = [] } = useAssetsQuery();
+  const { data: categories = [] } = useCategoriesQuery();
+
+  const incompleteCount = products.filter((p) => p.completeness < 100).length;
+  const stats = [
+    { label: "Total Products", value: products.length.toLocaleString(), icon: Package, change: "+12%", trend: "up" },
+    { label: "Digital Assets", value: assets.length.toLocaleString(), icon: Image, change: "+8%", trend: "up" },
+    { label: "Categories", value: categories.length.toLocaleString(), icon: FolderTree, change: "+3", trend: "up" },
+    { label: "Incomplete Items", value: incompleteCount.toLocaleString(), icon: AlertTriangle, change: "-15%", trend: "down" },
+  ];
+
+  const recentProducts = products.slice(0, 5).map((p) => ({
+    name: p.name,
+    sku: p.sku,
+    status: p.status === "Published" ? "Complete" : p.status,
+    completeness: p.completeness,
+  }));
+  const recentAssets = assets.slice(0, 4).map((a) => ({
+    name: a.name,
+    type: a.type,
+    size: a.size,
+    date: a.date,
+  }));
+
   return (
     <AppLayout title="Dashboard">
       <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -76,7 +86,11 @@ export default function Index() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-semibold">Recent Products</CardTitle>
-                  <Badge variant="secondary" className="font-normal">View all</Badge>
+                  <button onClick={() => navigate("/products")}>
+                    <Badge variant="secondary" className="font-normal hover:bg-secondary/80 transition-colors">
+                      View all
+                    </Badge>
+                  </button>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
@@ -114,7 +128,11 @@ export default function Index() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-semibold">Recent Assets</CardTitle>
-                  <Badge variant="secondary" className="font-normal">View all</Badge>
+                  <button onClick={() => navigate("/assets")}>
+                    <Badge variant="secondary" className="font-normal hover:bg-secondary/80 transition-colors">
+                      View all
+                    </Badge>
+                  </button>
                 </div>
               </CardHeader>
               <CardContent className="p-0">

@@ -1,0 +1,124 @@
+import type {
+  AnalyticsMetric,
+  Asset,
+  Attribute,
+  Category,
+  ImportExportHistoryItem,
+  Integration,
+  Product,
+  TeamMember,
+} from "@/types/pim";
+
+export const productTableSeed: Product[] = [
+  { id: 1, name: "Wireless Headphones Pro", sku: "WHP-001", category: "Audio", status: "Published", completeness: 100, channels: 3, image: null },
+  { id: 2, name: "USB-C Hub Adapter", sku: "UCH-042", category: "Accessories", status: "In Review", completeness: 85, channels: 2, image: null },
+  { id: 3, name: "Ergonomic Keyboard", sku: "EKB-103", category: "Input Devices", status: "Draft", completeness: 45, channels: 0, image: null },
+  { id: 4, name: "4K Monitor Stand", sku: "4KM-220", category: "Furniture", status: "Published", completeness: 100, channels: 4, image: null },
+  { id: 5, name: "Bluetooth Speaker Mini", sku: "BSM-087", category: "Audio", status: "In Review", completeness: 72, channels: 1, image: null },
+  { id: 6, name: "Mechanical Keyboard RGB", sku: "MKR-055", category: "Input Devices", status: "Draft", completeness: 30, channels: 0, image: null },
+  { id: 7, name: "Webcam 4K Ultra", sku: "W4K-011", category: "Video", status: "Published", completeness: 95, channels: 3, image: null },
+  { id: 8, name: "Laptop Sleeve 15\"", sku: "LS15-033", category: "Accessories", status: "Published", completeness: 100, channels: 5, image: null },
+  { id: 9, name: "USB Microphone Studio", sku: "UMS-201", category: "Audio", status: "Published", completeness: 92, channels: 3, image: null },
+  { id: 10, name: "Gaming Mouse Pro", sku: "GMP-344", category: "Input Devices", status: "In Review", completeness: 78, channels: 2, image: null },
+  { id: 11, name: "27-inch QHD Monitor", sku: "QHD-271", category: "Video", status: "Published", completeness: 100, channels: 4, image: null },
+  { id: 12, name: "Docking Station 12-in-1", sku: "DS12-120", category: "Accessories", status: "Draft", completeness: 56, channels: 1, image: null },
+  { id: 13, name: "Standing Desk Frame", sku: "SDF-712", category: "Furniture", status: "In Review", completeness: 68, channels: 2, image: null },
+  { id: 14, name: "Portable SSD 1TB", sku: "PSSD-1T", category: "Storage", status: "Published", completeness: 96, channels: 5, image: null },
+  { id: 15, name: "Noise Cancelling Earbuds", sku: "NCE-909", category: "Audio", status: "Published", completeness: 88, channels: 3, image: null },
+  { id: 16, name: "Wireless Presenter", sku: "WPR-112", category: "Accessories", status: "Draft", completeness: 41, channels: 1, image: null },
+  { id: 17, name: "Mechanical Numpad", sku: "MNP-415", category: "Input Devices", status: "In Review", completeness: 73, channels: 2, image: null },
+  { id: 18, name: "Conference Camera Bar", sku: "CCB-508", category: "Video", status: "Published", completeness: 97, channels: 4, image: null },
+  { id: 19, name: "USB-C to HDMI Cable", sku: "UCH-551", category: "Accessories", status: "Published", completeness: 100, channels: 5, image: null },
+  { id: 20, name: "Ergo Office Chair", sku: "EOC-621", category: "Furniture", status: "In Review", completeness: 82, channels: 2, image: null },
+  { id: 21, name: "4TB External HDD", sku: "EH4-741", category: "Storage", status: "Draft", completeness: 52, channels: 1, image: null },
+  { id: 22, name: "Desktop Soundbar", sku: "DSB-812", category: "Audio", status: "Published", completeness: 91, channels: 3, image: null },
+  { id: 23, name: "Vertical Ergonomic Mouse", sku: "VEM-877", category: "Input Devices", status: "Published", completeness: 95, channels: 4, image: null },
+  { id: 24, name: "Portable Projector Mini", sku: "PPM-921", category: "Video", status: "In Review", completeness: 76, channels: 2, image: null },
+];
+
+export const categoryTableSeed: Category[] = [
+  { id: 1, name: "Audio", products: 342, subcategories: ["Headphones", "Speakers", "Microphones", "Amplifiers"] },
+  { id: 2, name: "Input Devices", products: 218, subcategories: ["Keyboards", "Mice", "Trackpads", "Styluses"] },
+  { id: 3, name: "Video", products: 156, subcategories: ["Webcams", "Monitors", "Projectors"] },
+  { id: 4, name: "Accessories", products: 498, subcategories: ["Cables", "Adapters", "Cases", "Stands"] },
+  { id: 5, name: "Furniture", products: 89, subcategories: ["Desks", "Chairs", "Monitor Arms"] },
+  { id: 6, name: "Storage", products: 134, subcategories: ["External Drives", "USB Flash", "SD Cards"] },
+  { id: 7, name: "Networking", products: 112, subcategories: ["Routers", "Switches", "Access Points"] },
+  { id: 8, name: "Power", products: 168, subcategories: ["Chargers", "Power Banks", "UPS"] },
+  { id: 9, name: "Smart Home", products: 149, subcategories: ["Cameras", "Sensors", "Lighting"] },
+  { id: 10, name: "Office Essentials", products: 204, subcategories: ["Notebooks", "Organizers", "Desk Mats"] },
+  { id: 11, name: "Wearables", products: 73, subcategories: ["Smartwatches", "Fitness Bands"] },
+  { id: 12, name: "Gaming", products: 187, subcategories: ["Controllers", "Headsets", "Streaming Gear"] },
+];
+
+export const assetTableSeed: Asset[] = [
+  { id: 1, name: "hero-banner-spring.jpg", type: "Image", size: "2.4 MB", dimensions: "1920×1080", tags: ["banner", "spring"], date: "Mar 18, 2026" },
+  { id: 2, name: "product-headphones-front.png", type: "Image", size: "1.1 MB", dimensions: "2000×2000", tags: ["product", "headphones"], date: "Mar 17, 2026" },
+  { id: 3, name: "brand-video-2024.mp4", type: "Video", size: "48 MB", dimensions: "3840×2160", tags: ["brand", "video"], date: "Mar 15, 2026" },
+  { id: 4, name: "catalog-spring-2026.pdf", type: "Document", size: "12 MB", dimensions: "–", tags: ["catalog", "pdf"], date: "Mar 14, 2026" },
+  { id: 5, name: "lifestyle-office-setup.jpg", type: "Image", size: "3.8 MB", dimensions: "4000×2667", tags: ["lifestyle"], date: "Mar 12, 2026" },
+  { id: 6, name: "product-keyboard-top.png", type: "Image", size: "980 KB", dimensions: "2000×2000", tags: ["product", "keyboard"], date: "Mar 10, 2026" },
+  { id: 7, name: "unboxing-tutorial.mp4", type: "Video", size: "120 MB", dimensions: "1920×1080", tags: ["tutorial"], date: "Mar 8, 2026" },
+  { id: 8, name: "brand-guidelines-v3.pdf", type: "Document", size: "8.2 MB", dimensions: "–", tags: ["brand", "guidelines"], date: "Mar 5, 2026" },
+  { id: 9, name: "campaign-summer-hero.jpg", type: "Image", size: "2.9 MB", dimensions: "1920×1080", tags: ["campaign", "summer"], date: "Mar 4, 2026" },
+  { id: 10, name: "studio-lighting-setup.png", type: "Image", size: "1.7 MB", dimensions: "2400×1600", tags: ["studio"], date: "Mar 3, 2026" },
+  { id: 11, name: "demo-walkthrough.mp4", type: "Video", size: "88 MB", dimensions: "1920×1080", tags: ["demo"], date: "Mar 2, 2026" },
+  { id: 12, name: "partner-brand-kit.pdf", type: "Document", size: "6.4 MB", dimensions: "–", tags: ["partner", "brand"], date: "Mar 1, 2026" },
+  { id: 13, name: "product-lifestyle-01.jpg", type: "Image", size: "4.1 MB", dimensions: "3500×2333", tags: ["lifestyle", "product"], date: "Feb 28, 2026" },
+  { id: 14, name: "product-lifestyle-02.jpg", type: "Image", size: "3.6 MB", dimensions: "3200×2133", tags: ["lifestyle"], date: "Feb 27, 2026" },
+  { id: 15, name: "installation-guide.pdf", type: "Document", size: "3.2 MB", dimensions: "–", tags: ["guide"], date: "Feb 26, 2026" },
+  { id: 16, name: "quick-start-video.mp4", type: "Video", size: "64 MB", dimensions: "1280×720", tags: ["quickstart"], date: "Feb 25, 2026" },
+  { id: 17, name: "category-banner-audio.jpg", type: "Image", size: "2.1 MB", dimensions: "1920×600", tags: ["audio", "banner"], date: "Feb 24, 2026" },
+  { id: 18, name: "category-banner-video.jpg", type: "Image", size: "2.0 MB", dimensions: "1920×600", tags: ["video", "banner"], date: "Feb 23, 2026" },
+];
+
+export const attributeTableSeed: Attribute[] = [
+  { id: 1, name: "Product Name", type: "Text", group: "Basic Information", values: null, required: true, categories: ["Audio", "Input Devices", "Video", "Accessories", "Furniture", "Storage"] },
+  { id: 2, name: "SKU", type: "Text", group: "Basic Information", values: null, required: true, categories: ["Audio", "Input Devices", "Video", "Accessories", "Furniture", "Storage"] },
+  { id: 3, name: "Short Description", type: "Text", group: "Basic Information", values: null, required: true, categories: ["Audio", "Input Devices", "Video", "Accessories"] },
+  { id: 4, name: "Long Description", type: "Rich Text", group: "Basic Information", values: null, required: false, categories: ["Audio", "Input Devices", "Video"] },
+  { id: 5, name: "Brand", type: "Text", group: "Organization", values: null, required: true, categories: ["Audio", "Input Devices", "Video", "Accessories"] },
+  { id: 6, name: "Category", type: "Select", group: "Organization", values: 5, required: false, categories: [] },
+  { id: 7, name: "Color", type: "Select", group: "Variants", values: 12, required: false, categories: ["Audio", "Accessories", "Gaming"] },
+  { id: 8, name: "Material", type: "Text", group: "Specifications", values: null, required: false, categories: ["Furniture", "Accessories"] },
+  { id: 9, name: "Weight", type: "Number", group: "Specifications", values: null, required: false, categories: ["Audio", "Input Devices", "Video"] },
+  { id: 10, name: "Warranty Period", type: "Select", group: "Compliance", values: 4, required: true, categories: ["Audio", "Video", "Storage"] },
+  { id: 11, name: "Battery Capacity", type: "Number", group: "Specifications", values: null, required: false, categories: ["Audio", "Wearables"] },
+  { id: 12, name: "Connectivity", type: "Multi-select", group: "Specifications", values: 6, required: true, categories: ["Audio", "Input Devices", "Video"] },
+  { id: 13, name: "Country of Origin", type: "Text", group: "Compliance", values: null, required: true, categories: ["Audio", "Input Devices", "Accessories", "Furniture"] },
+  { id: 14, name: "Release Date", type: "Text", group: "Lifecycle", values: null, required: false, categories: ["Audio", "Video", "Gaming"] },
+];
+
+export const integrationTableSeed: Integration[] = [
+  { id: 1, name: "Shopify", description: "Sync products, inventory and orders with your Shopify store.", logo: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/shopify.svg", status: "Connected", connected: true, category: "E-commerce" },
+  { id: 2, name: "Amazon", description: "List and manage products on Amazon Marketplace.", logo: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/amazon.svg", status: "Not Connected", connected: false, category: "Marketplace" },
+  { id: 3, name: "WooCommerce", description: "Integrate with WordPress WooCommerce stores.", logo: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/woocommerce.svg", status: "Not Connected", connected: false, category: "E-commerce" },
+];
+
+export const importExportTableSeed: ImportExportHistoryItem[] = [
+  { id: 1, name: "products_export_mar18.csv", type: "Export", status: "Completed", records: 2847, date: "Mar 18, 2026", time: "14:32" },
+  { id: 2, name: "assets_import_batch.zip", type: "Import", status: "Completed", records: 156, date: "Mar 17, 2026", time: "09:15" },
+  { id: 3, name: "catalog_update.xlsx", type: "Import", status: "Failed", records: 0, date: "Mar 16, 2026", time: "16:45" },
+];
+
+export const analyticsMetricSeed: AnalyticsMetric[] = [
+  { id: 1, label: "Data Quality Score", value: "87%", change: "+4%" },
+  { id: 2, label: "Enrichment Rate", value: "72%", change: "+12%" },
+  { id: 3, label: "Asset Views", value: "24.5K", change: "+18%" },
+  { id: 4, label: "Channel Coverage", value: "94%", change: "+2%" },
+];
+
+export const teamMemberSeed: TeamMember[] = [
+  { id: 1, name: "Kapil Sharma", email: "kapil@kapxr.com", role: "Admin", status: "Active", initials: "KS" },
+  { id: 2, name: "Priya Patel", email: "priya@kapxr.com", role: "Editor", status: "Active", initials: "PP" },
+  { id: 3, name: "Raj Kumar", email: "raj@kapxr.com", role: "Viewer", status: "Active", initials: "RK" },
+  { id: 4, name: "Sarah Chen", email: "sarah@kapxr.com", role: "Editor", status: "Invited", initials: "SC" },
+  { id: 5, name: "Aman Verma", email: "aman@kapxr.com", role: "Viewer", status: "Active", initials: "AV" },
+  { id: 6, name: "Neha Reddy", email: "neha@kapxr.com", role: "Editor", status: "Active", initials: "NR" },
+  { id: 7, name: "David Lee", email: "david@kapxr.com", role: "Viewer", status: "Invited", initials: "DL" },
+  { id: 8, name: "Mia Santos", email: "mia@kapxr.com", role: "Admin", status: "Active", initials: "MS" },
+  { id: 9, name: "Rohan Gupta", email: "rohan@kapxr.com", role: "Editor", status: "Active", initials: "RG" },
+  { id: 10, name: "Ishita Bose", email: "ishita@kapxr.com", role: "Viewer", status: "Active", initials: "IB" },
+  { id: 11, name: "Omar Khan", email: "omar@kapxr.com", role: "Editor", status: "Invited", initials: "OK" },
+  { id: 12, name: "Lina Park", email: "lina@kapxr.com", role: "Viewer", status: "Active", initials: "LP" },
+];

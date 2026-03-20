@@ -36,14 +36,14 @@
 
     --radius: 0.625rem;
 
-    --sidebar-background: 222 100% 50%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 222 100% 50%;
-    --sidebar-accent: 222 100% 58%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 100% 58%;
-    --sidebar-ring: 0 0% 100%;
+    --sidebar-background: 222 92% 94%;
+    --sidebar-foreground: 224 46% 24%;
+    --sidebar-primary: 222 100% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 88% 86%;
+    --sidebar-accent-foreground: 224 55% 22%;
+    --sidebar-border: 222 70% 84%;
+    --sidebar-ring: 222 100% 50%;
 
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
@@ -83,11 +83,70 @@
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  @keyframes brandGradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .brand-gradient-animated {
+    background-image: linear-gradient(120deg, #2f6bff, #7a4dff, #19b8ff, #5d3dff);
+    background-size: 240% 240%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: brandGradientShift 8s ease infinite;
+  }
+
+  @keyframes landingGradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .landing-animated-bg {
+    background: linear-gradient(130deg, rgba(47, 107, 255, 0.14), rgba(122, 77, 255, 0.16), rgba(25, 184, 255, 0.12), rgba(93, 61, 255, 0.14));
+    background-size: 220% 220%;
+    animation: landingGradientShift 14s ease infinite;
+  }
+
+  .landing-gradient-surface {
+    background: linear-gradient(145deg, rgba(86, 97, 255, 0.08), rgba(114, 69, 255, 0.1), rgba(0, 188, 255, 0.08));
+    border: 1px solid rgba(123, 131, 255, 0.24);
+  }
+
+  html[data-ui-density="compact"] .app-content table th,
+  html[data-ui-density="compact"] .app-content table td {
+    padding: 0.625rem;
+  }
+
+  html[data-ui-density="compact"] .app-content .recharts-cartesian-axis-tick-value {
+    font-size: 11px;
   }
 }

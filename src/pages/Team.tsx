@@ -3,15 +3,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Plus, MoreHorizontal } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { motion } from "framer-motion";
-
-const members = [
-  { name: "Kapil Sharma", email: "kapil@kapxr.com", role: "Admin", status: "Active", initials: "KS" },
-  { name: "Priya Patel", email: "priya@kapxr.com", role: "Editor", status: "Active", initials: "PP" },
-  { name: "Raj Kumar", email: "raj@kapxr.com", role: "Viewer", status: "Active", initials: "RK" },
-  { name: "Sarah Chen", email: "sarah@kapxr.com", role: "Editor", status: "Invited", initials: "SC" },
-];
+import {
+  useCreateTeamMemberMutation,
+  useDeleteTeamMemberMutation,
+  useTeamMembersQuery,
+  useUpdateTeamMemberMutation,
+} from "@/hooks/usePimQueries";
+import { useMemo, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import type { TeamMember } from "@/types/pim";
+import { AppPagination } from "@/components/shared/AppPagination";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import { notifySuccess } from "@/lib/notify";
 
 const roleColor: Record<string, string> = {
   Admin: "bg-primary/10 text-primary border-primary/20",
@@ -19,38 +27,265 @@ const roleColor: Record<string, string> = {
   Viewer: "bg-muted text-muted-foreground",
 };
 
+const inviteStatusColor: Record<"Active" | "Invited", string> = {
+  Active: "bg-success/10 text-success border-success/20",
+  Invited: "bg-warning/10 text-warning border-warning/20",
+};
+
 export default function Team() {
+  const { toast } = useToast();
+  const { data: members = [] } = useTeamMembersQuery();
+  const createTeamMemberMutation = useCreateTeamMemberMutation();
+  const deleteTeamMemberMutation = useDeleteTeamMemberMutation();
+  const updateTeamMemberMutation = useUpdateTeamMemberMutation();
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [inviteName, setInviteName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"Admin" | "Editor" | "Viewer">("Viewer");
+  const [editMemberId, setEditMemberId] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState<"Admin" | "Editor" | "Viewer">("Viewer");
+  const [editStatus, setEditStatus] = useState<"Active" | "Invited">("Active");
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
+  const totalPages = Math.max(1, Math.ceil(members.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paginatedMembers = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return members.slice(start, start + pageSize);
+  }, [members, safePage]);
+
+  const handleInvite = async () => {
+    if (!inviteName.trim() || !inviteEmail.trim()) return;
+    const initials = inviteName
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part[0]?.toUpperCase())
+      .slice(0, 2)
+      .join("");
+    await createTeamMemberMutation.mutateAsync({
+      name: inviteName.trim(),
+      email: inviteEmail.trim(),
+      role: inviteRole,
+      status: "Invited",
+      initials: initials || "TM",
+    });
+    setInviteName("");
+    setInviteEmail("");
+    setInviteRole("Viewer");
+    setInviteOpen(false);
+    notifySuccess(toast, "Invitation sent", `${inviteRole} access assigned.`);
+  };
+
+  const handleRemove = async (id: number) => {
+    await deleteTeamMemberMutation.mutateAsync(id);
+    notifySuccess(toast, "Team member removed");
+  };
+
+  const openEditDialog = (member: TeamMember) => {
+    setEditMemberId(member.id);
+    setEditName(member.name);
+    setEditEmail(member.email);
+    setEditRole(member.role);
+    setEditStatus(member.status);
+    setEditOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editMemberId || !editName.trim() || !editEmail.trim()) return;
+    const initials = editName
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part[0]?.toUpperCase())
+      .slice(0, 2)
+      .join("");
+    await updateTeamMemberMutation.mutateAsync({
+      id: editMemberId,
+      data: {
+        name: editName.trim(),
+        email: editEmail.trim(),
+        role: editRole,
+        status: editStatus,
+        initials: initials || "TM",
+      },
+    });
+    setEditOpen(false);
+    notifySuccess(toast, "Team member updated");
+  };
+
   return (
     <AppLayout title="Team">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">{members.length} team members</p>
-          <Button size="sm" className="h-9 gap-1.5"><Plus className="h-3.5 w-3.5" /> Invite Member</Button>
+          <Button size="sm" className="h-9 gap-1.5" onClick={() => setInviteOpen(true)}>
+            <Plus className="h-3.5 w-3.5" /> Invite Member
+          </Button>
         </div>
         <Card>
-          <CardContent className="p-0 divide-y">
-            {members.map((m) => (
-              <div key={m.email} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">{m.initials}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">{m.name}</p>
-                    <p className="text-xs text-muted-foreground">{m.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline" className={`text-[10px] ${roleColor[m.role]}`}>{m.role}</Badge>
-                  {m.status === "Invited" && <Badge variant="secondary" className="text-[10px]">Pending</Badge>}
-                  <button className="p-1 rounded hover:bg-muted transition-colors">
-                    <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                </div>
-              </div>
-            ))}
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/40">
+                    <th className="px-6 py-3 text-left font-medium text-muted-foreground">Team Member</th>
+                    <th className="px-6 py-3 text-left font-medium text-muted-foreground">Role</th>
+                    <th className="px-6 py-3 text-left font-medium text-muted-foreground">Invite Status</th>
+                    <th className="px-6 py-3 text-right font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedMembers.map((m) => (
+                    <tr key={m.email} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9">
+                            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">{m.initials}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-medium">{m.name}</p>
+                            <p className="text-xs text-muted-foreground">{m.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge variant="outline" className={`text-[10px] ${roleColor[m.role]}`}>{m.role}</Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge variant="outline" className={`text-[10px] ${inviteStatusColor[m.status]}`}>
+                          {m.status === "Invited" ? "Pending Invite" : "Accepted"}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            className="h-8 w-8 rounded-md hover:bg-muted transition-colors inline-flex items-center justify-center"
+                            onClick={() => openEditDialog(m)}
+                            aria-label={`Edit ${m.name}`}
+                          >
+                            <Pencil className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                          <button
+                            className="h-8 w-8 rounded-md hover:bg-destructive/10 transition-colors inline-flex items-center justify-center"
+                            onClick={() => setDeleteTarget(m.id)}
+                            aria-label={`Remove ${m.name}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
+        <AppPagination page={safePage} pageSize={pageSize} totalItems={members.length} onPageChange={setPage} />
+        <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Invite Team Member</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Input
+                value={inviteName}
+                onChange={(event) => setInviteName(event.target.value)}
+                placeholder="Full name"
+              />
+              <Input
+                value={inviteEmail}
+                onChange={(event) => setInviteEmail(event.target.value)}
+                placeholder="Email address"
+              />
+              <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as typeof inviteRole)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Viewer">Viewer</SelectItem>
+                  <SelectItem value="Editor">Editor</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
+                <Button
+                  onClick={handleInvite}
+                  disabled={!inviteName.trim() || !inviteEmail.trim() || createTeamMemberMutation.isPending}
+                >
+                  Send Invite
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Team Member</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Input
+                value={editName}
+                onChange={(event) => setEditName(event.target.value)}
+                placeholder="Full name"
+              />
+              <Input
+                value={editEmail}
+                onChange={(event) => setEditEmail(event.target.value)}
+                placeholder="Email address"
+              />
+              <Select value={editRole} onValueChange={(value) => setEditRole(value as typeof editRole)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Viewer">Viewer</SelectItem>
+                  <SelectItem value="Editor">Editor</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={editStatus} onValueChange={(value) => setEditStatus(value as typeof editStatus)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Invited">Invited</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+                <Button
+                  onClick={handleEditSave}
+                  disabled={!editName.trim() || !editEmail.trim() || updateTeamMemberMutation.isPending}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <ConfirmActionDialog
+          open={deleteTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+          title="Remove team member?"
+          description="This member will lose access to the workspace."
+          confirmLabel="Remove"
+          destructive
+          onConfirm={async () => {
+            if (deleteTarget === null) return;
+            await handleRemove(deleteTarget);
+            setDeleteTarget(null);
+          }}
+        />
       </motion.div>
     </AppLayout>
   );

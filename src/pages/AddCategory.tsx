@@ -12,19 +12,13 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-
-const parentCategories = [
-  "Audio",
-  "Input Devices",
-  "Video",
-  "Accessories",
-  "Furniture",
-  "Storage",
-];
+import { useCategoriesQuery, useCreateCategoryMutation } from "@/hooks/usePimQueries";
 
 export default function AddCategory() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: categories = [] } = useCategoriesQuery();
+  const createCategoryMutation = useCreateCategoryMutation();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
@@ -53,7 +47,7 @@ export default function AddCategory() {
     setSubcategories(subcategories.filter((s) => s !== sub));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name) {
       toast({
         title: "Missing fields",
@@ -62,6 +56,11 @@ export default function AddCategory() {
       });
       return;
     }
+    await createCategoryMutation.mutateAsync({
+      name,
+      products: 0,
+      subcategories,
+    });
     toast({
       title: "Category created",
       description: `"${name}" has been added successfully.`,
@@ -129,8 +128,8 @@ export default function AddCategory() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">None (top-level)</SelectItem>
-                      {parentCategories.map((p) => (
-                        <SelectItem key={p} value={p}>{p}</SelectItem>
+                      {categories.map((p) => (
+                        <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

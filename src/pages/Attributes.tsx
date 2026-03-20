@@ -3,35 +3,25 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tags, Plus, Search, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tags, Plus, Search, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-
-const attributes = [
-  { name: "Product Name", type: "Text", group: "Basic Information", values: null, required: true, categories: ["Audio", "Input Devices", "Video", "Accessories", "Furniture", "Storage"] },
-  { name: "SKU", type: "Text", group: "Basic Information", values: null, required: true, categories: ["Audio", "Input Devices", "Video", "Accessories", "Furniture", "Storage"] },
-  { name: "Short Description", type: "Text", group: "Basic Information", values: null, required: true, categories: ["Audio", "Input Devices", "Video", "Accessories"] },
-  { name: "Long Description", type: "Rich Text", group: "Basic Information", values: null, required: false, categories: ["Audio", "Input Devices", "Video"] },
-  { name: "Brand", type: "Text", group: "Organization", values: null, required: true, categories: ["Audio", "Input Devices", "Video", "Accessories"] },
-  { name: "Category", type: "Select", group: "Organization", values: 5, required: false, categories: [] },
-  { name: "Price (USD)", type: "Number", group: "Pricing & Inventory", values: null, required: true, categories: ["Audio", "Input Devices", "Video", "Accessories", "Furniture", "Storage"] },
-  { name: "Compare at Price", type: "Number", group: "Pricing & Inventory", values: null, required: false, categories: ["Audio", "Input Devices", "Accessories"] },
-  { name: "Barcode / EAN", type: "Text", group: "Pricing & Inventory", values: null, required: false, categories: ["Audio", "Input Devices", "Accessories", "Storage"] },
-  { name: "Weight", type: "Number", group: "Physical Details", values: null, required: false, categories: ["Audio", "Input Devices", "Accessories", "Furniture"] },
-  { name: "Dimensions", type: "Text", group: "Physical Details", values: null, required: false, categories: ["Audio", "Furniture", "Storage"] },
-  { name: "Material", type: "Multi-select", group: "Physical Details", values: 18, required: false, categories: ["Audio", "Input Devices", "Furniture"] },
-  { name: "Color", type: "Select", group: "Physical Details", values: 24, required: false, categories: ["Audio", "Input Devices", "Accessories", "Furniture"] },
-  { name: "Connectivity", type: "Multi-select", group: "Technical Specs", values: 6, required: false, categories: ["Audio", "Input Devices"] },
-  { name: "Battery Life", type: "Text", group: "Technical Specs", values: null, required: false, categories: ["Audio", "Input Devices"] },
-  { name: "Noise Cancellation", type: "Select", group: "Technical Specs", values: 3, required: false, categories: ["Audio"] },
-  { name: "Driver Size", type: "Text", group: "Technical Specs", values: null, required: false, categories: ["Audio"] },
-  { name: "Frequency Response", type: "Text", group: "Technical Specs", values: null, required: false, categories: ["Audio"] },
-  { name: "Impedance", type: "Text", group: "Technical Specs", values: null, required: false, categories: ["Audio"] },
-  { name: "Waterproof Rating", type: "Select", group: "Technical Specs", values: 5, required: false, categories: ["Audio", "Input Devices"] },
-  { name: "Warranty", type: "Select", group: "Technical Specs", values: 4, required: false, categories: ["Audio", "Input Devices", "Video", "Accessories", "Furniture", "Storage"] },
-  { name: "Tags", type: "Multi-select", group: "Organization", values: null, required: false, categories: [] },
-  { name: "Status", type: "Select", group: "Visibility", values: 3, required: true, categories: [] },
-];
+import {
+  useAttributesQuery,
+  useDeleteAttributeMutation,
+  useUpdateAttributeMutation,
+} from "@/hooks/usePimQueries";
+import { useEffect, useMemo, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { AppPagination } from "@/components/shared/AppPagination";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import { notifySuccess } from "@/lib/notify";
 
 const typeColor: Record<string, string> = {
   Select: "bg-primary/10 text-primary",
@@ -43,6 +33,53 @@ const typeColor: Record<string, string> = {
 
 export default function Attributes() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { data: attributes = [] } = useAttributesQuery();
+  const updateAttributeMutation = useUpdateAttributeMutation();
+  const deleteAttributeMutation = useDeleteAttributeMutation();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
+  const filteredAttributes = useMemo(
+    () =>
+      attributes.filter(
+        (a) =>
+          a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          a.group.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          a.type.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [attributes, searchTerm]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAttributes.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paginatedAttributes = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filteredAttributes.slice(start, start + pageSize);
+  }, [filteredAttributes, safePage]);
+
+  const handleRename = async (id: number, currentName: string) => {
+    const nextName = window.prompt("Rename attribute", currentName);
+    if (!nextName || nextName === currentName) return;
+    await updateAttributeMutation.mutateAsync({ id, data: { name: nextName } });
+    notifySuccess(toast, "Attribute renamed");
+  };
+
+  const handleToggleRequired = async (id: number, required: boolean) => {
+    await updateAttributeMutation.mutateAsync({ id, data: { required: !required } });
+    notifySuccess(toast, "Attribute updated", `Required is now ${!required ? "enabled" : "disabled"}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    await deleteAttributeMutation.mutateAsync(id);
+    notifySuccess(toast, "Attribute deleted");
+  };
 
   return (
     <AppLayout title="Attributes">
@@ -50,7 +87,12 @@ export default function Attributes() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search attributes..." className="pl-9 h-9 w-64 bg-card border" />
+            <Input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search attributes..."
+              className="pl-9 h-9 w-64 bg-card border"
+            />
           </div>
           <Button size="sm" className="h-9 gap-1.5" onClick={() => navigate("/attributes/new")}>
             <Plus className="h-3.5 w-3.5" /> Add Attribute
@@ -72,8 +114,8 @@ export default function Attributes() {
                 </tr>
               </thead>
               <tbody>
-                {attributes.map((a) => (
-                  <tr key={a.name} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                {paginatedAttributes.map((a) => (
+                  <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="p-3">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-md bg-accent flex items-center justify-center">
@@ -109,9 +151,24 @@ export default function Attributes() {
                       )}
                     </td>
                     <td className="p-3">
-                      <button className="p-1 rounded hover:bg-muted transition-colors">
-                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-1 rounded hover:bg-muted transition-colors">
+                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleRename(a.id, a.name)}>
+                            <Pencil className="h-3.5 w-3.5 mr-2" /> Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleRequired(a.id, a.required)}>
+                            Toggle Required
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(a.id)}>
+                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -119,6 +176,23 @@ export default function Attributes() {
             </table>
           </CardContent>
         </Card>
+        <AppPagination page={safePage} pageSize={pageSize} totalItems={filteredAttributes.length} onPageChange={setPage} />
+
+        <ConfirmActionDialog
+          open={deleteTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+          title="Delete attribute?"
+          description="This action cannot be undone."
+          confirmLabel="Delete"
+          destructive
+          onConfirm={async () => {
+            if (deleteTarget === null) return;
+            await handleDelete(deleteTarget);
+            setDeleteTarget(null);
+          }}
+        />
       </motion.div>
     </AppLayout>
   );

@@ -6,6 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.pid
+*.seed
 
 node_modules
 dist
@@ -17,23 +19,34 @@ dist-ssr
 coverage
 playwright-report
 test-results
+.nyc_output
 
 # Build caches
 .vite
 *.tsbuildinfo
+.eslintcache
 
 # Environment files
 .env
 .env.*
 !.env.example
+.envrc
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.tmp
+
+# Runtime / local data
+tmp
+temp
+*.sqlite
+*.sqlite3

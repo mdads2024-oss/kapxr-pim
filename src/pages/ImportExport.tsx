@@ -4,15 +4,29 @@ import { Button } from "@/components/ui/button";
 import { Upload, Download, FileSpreadsheet, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-
-const history = [
-  { name: "products_export_mar18.csv", type: "Export", status: "Completed", records: 2847, date: "Mar 18, 2026", time: "14:32" },
-  { name: "assets_import_batch.zip", type: "Import", status: "Completed", records: 156, date: "Mar 17, 2026", time: "09:15" },
-  { name: "catalog_update.xlsx", type: "Import", status: "Failed", records: 0, date: "Mar 16, 2026", time: "16:45" },
-  { name: "channel_data_amazon.csv", type: "Export", status: "Completed", records: 1203, date: "Mar 15, 2026", time: "11:20" },
-];
+import { useCreateImportExportHistoryMutation, useImportExportHistoryQuery } from "@/hooks/usePimQueries";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ImportExport() {
+  const { toast } = useToast();
+  const { data: history = [] } = useImportExportHistoryQuery();
+  const createHistoryMutation = useCreateImportExportHistoryMutation();
+
+  const addHistory = async (type: "Import" | "Export") => {
+    const now = new Date();
+    const date = now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const time = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+    await createHistoryMutation.mutateAsync({
+      name: `${type.toLowerCase()}_${Date.now()}.csv`,
+      type,
+      status: "Completed",
+      records: Math.floor(Math.random() * 2000) + 100,
+      date,
+      time,
+    });
+    toast({ title: `${type} job created` });
+  };
+
   return (
     <AppLayout title="Import / Export">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -26,7 +40,7 @@ export default function ImportExport() {
                 <h3 className="font-semibold">Import Data</h3>
                 <p className="text-sm text-muted-foreground">Upload CSV, XLSX, or JSON files</p>
               </div>
-              <Button variant="outline" size="sm">Select Files</Button>
+              <Button variant="outline" size="sm" onClick={() => addHistory("Import")}>Select Files</Button>
             </CardContent>
           </Card>
           <Card className="border-dashed border-2 hover:border-primary/50 transition-colors cursor-pointer group">
@@ -38,7 +52,7 @@ export default function ImportExport() {
                 <h3 className="font-semibold">Export Data</h3>
                 <p className="text-sm text-muted-foreground">Download products, assets, or catalogs</p>
               </div>
-              <Button variant="outline" size="sm">Configure Export</Button>
+              <Button variant="outline" size="sm" onClick={() => addHistory("Export")}>Configure Export</Button>
             </CardContent>
           </Card>
         </div>
@@ -49,8 +63,8 @@ export default function ImportExport() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y">
-              {history.map((h, i) => (
-                <div key={i} className="flex items-center justify-between px-6 py-3">
+              {history.map((h) => (
+                <div key={h.id} className="flex items-center justify-between px-6 py-3">
                   <div className="flex items-center gap-3">
                     <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
                     <div>

@@ -1,6 +1,8 @@
-# kapxr-pim
+# KapxrPIM Frontend
 
-A Product Information Management (PIM) frontend built with Vite, React, TypeScript, Tailwind CSS, and shadcn/ui components.
+Production-grade Product Information Management (PIM) frontend built with Vite, React, and TypeScript.
+
+This app follows a frontend-first architecture with a provider abstraction so teams can start with mock data now and switch to a real backend API with minimal UI rewrites.
 
 ## Tech Stack
 
@@ -10,47 +12,83 @@ A Product Information Management (PIM) frontend built with Vite, React, TypeScri
 - shadcn/ui + Radix UI
 - React Router
 - TanStack Query
+- Zustand (UI/app state)
+- Framer Motion + Recharts
 - Vitest + Testing Library
 
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ (recommended: latest LTS)
+- Node.js 18+ (latest LTS recommended)
 - npm 9+
 
-### Install Dependencies
+### Setup
 
 ```bash
 npm install
-```
-
-### Run Development Server
-
-```bash
+cp .env.example .env
 npm run dev
 ```
 
-App runs by default on [http://localhost:8080](http://localhost:8080).
+Default local URL is usually [http://localhost:8080](http://localhost:8080) (or the port shown in terminal).
 
-## Available Scripts
+## Environment Variables
 
-- `npm run dev` - Start local development server
-- `npm run build` - Create production build
-- `npm run build:dev` - Create development-mode build
-- `npm run preview` - Preview production build locally
-- `npm run lint` - Run ESLint checks
-- `npm run test` - Run tests once (Vitest)
-- `npm run test:watch` - Run tests in watch mode
+See `.env.example`:
+
+- `VITE_PIM_DATA_SOURCE=mock` - use local mock provider and storage
+- `VITE_PIM_DATA_SOURCE=api` - use API provider (requires `VITE_API_BASE_URL`)
+- `VITE_API_BASE_URL` - backend base URL when using `api` mode
+
+> Never commit `.env` files. Only commit `.env.example`.
+
+## Scripts
+
+- `npm run dev` - start development server
+- `npm run build` - create production build
+- `npm run build:dev` - development-mode build
+- `npm run preview` - preview production build locally
+- `npm run lint` - run ESLint
+- `npm run test` - run tests once (Vitest)
+- `npm run test:watch` - run tests in watch mode
+
+## Architecture Notes
+
+- Provider interface pattern:
+  - `MockPIMProvider` for local mock-first workflows
+  - `ApiPIMProvider` for backend integration
+  - service/facade layer to keep UI decoupled from data source
+- React Query handles caching, invalidation, and app-wide consistency.
+- Theme, density, auth session, and common UX helpers are centralized in `src/lib`.
 
 ## Project Structure
 
-- `src/components` - Shared and UI components
-- `src/pages` - Route/page-level components
-- `src/hooks` - Reusable React hooks
-- `src/lib` - Utility helpers
-- `src/test` - Test setup and test files
+- `src/components` - reusable components and layout
+- `src/pages` - route-level screens
+- `src/services` - provider abstraction and data services
+- `src/mockdb` - seed/mock datasets
+- `src/hooks` - reusable hooks
+- `src/lib` - utilities (auth, theme, density, notifications)
+- `src/test` - tests and test setup
 
-## Git
+## Quality Expectations
 
-Default branch: `main`.
+Before opening PRs:
+
+```bash
+npm run lint
+npm run test
+npm run build
+```
+
+## Security & Secrets
+
+- Do not commit secrets, API keys, tokens, or local env files.
+- Keep credentials only in local `.env`.
+- Rotate compromised keys immediately.
+
+## Branching
+
+- Default branch: `main`
+- Use short-lived feature branches and descriptive commit messages.

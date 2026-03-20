@@ -9,6 +9,7 @@ import {
   BarChart3,
   Upload,
   Plug,
+  LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -28,7 +29,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/app", icon: LayoutDashboard },
   { title: "Products", url: "/products", icon: Package },
   { title: "Digital Assets", url: "/assets", icon: Image },
   { title: "Categories", url: "/categories", icon: FolderTree },
@@ -44,6 +45,7 @@ const manageItems = [
 
 const settingsItems = [
   { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Sign Out", url: "/logout", icon: LogOut },
 ];
 
 export function AppSidebar() {
@@ -69,7 +71,7 @@ export function AppSidebar() {
               >
                 <NavLink
                   to={item.url}
-                  end={item.url === "/"}
+                  end={item.url === "/app"}
                   className="transition-colors"
                   activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                 >
@@ -89,7 +91,7 @@ export function AppSidebar() {
       <div className="flex items-center gap-2 px-4 py-5 border-b border-sidebar-border">
         <img src={kapxrLogo} alt="KapxrPIM" className="h-8 w-8 rounded-md object-cover" />
         {!collapsed && (
-          <span className="text-sidebar-foreground font-bold text-lg tracking-tight">
+          <span className="font-bold text-lg tracking-tight brand-gradient-animated">
             KapxrPIM
           </span>
         )}

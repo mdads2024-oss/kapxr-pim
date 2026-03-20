@@ -12,15 +12,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-
-const categories = [
-  "Audio",
-  "Input Devices",
-  "Video",
-  "Accessories",
-  "Furniture",
-  "Storage",
-];
+import { useCategoriesQuery, useCreateAttributeMutation } from "@/hooks/usePimQueries";
 
 const attributeGroups = [
   "Basic Information",
@@ -37,12 +29,13 @@ const attributeTypes = [
   { value: "Number", description: "Numeric value" },
   { value: "Select", description: "Single choice from predefined options" },
   { value: "Multi-select", description: "Multiple choices from predefined options" },
-  { value: "Boolean", description: "True or false toggle" },
 ];
 
 export default function AddAttribute() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: categories = [] } = useCategoriesQuery();
+  const createAttributeMutation = useCreateAttributeMutation();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("");
@@ -72,7 +65,7 @@ export default function AddAttribute() {
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !type || !group) {
       toast({
         title: "Missing fields",
@@ -81,6 +74,14 @@ export default function AddAttribute() {
       });
       return;
     }
+    await createAttributeMutation.mutateAsync({
+      name,
+      type: type as "Text" | "Rich Text" | "Number" | "Select" | "Multi-select",
+      group,
+      values: showOptions ? options.length : null,
+      required,
+      categories: selectedCategories,
+    });
     toast({
       title: "Attribute created",
       description: `"${name}" has been added to ${group}.`,
@@ -217,11 +218,11 @@ export default function AddAttribute() {
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {categories.map((cat) => {
-                    const selected = selectedCategories.includes(cat);
+                    const selected = selectedCategories.includes(cat.name);
                     return (
                       <button
-                        key={cat}
-                        onClick={() => toggleCategory(cat)}
+                        key={cat.id}
+                        onClick={() => toggleCategory(cat.name)}
                         className={`flex items-center gap-2 rounded-lg border p-3 text-sm font-medium transition-colors text-left ${
                           selected
                             ? "border-primary bg-primary/10 text-primary"
@@ -239,7 +240,7 @@ export default function AddAttribute() {
                             </svg>
                           )}
                         </div>
-                        {cat}
+                        {cat.name}
                       </button>
                     );
                   })}

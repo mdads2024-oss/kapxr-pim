@@ -7,24 +7,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Save, Plus, X, Image, Search, Check, FileText, Film } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-
-const digitalAssets = [
-  { id: 1, name: "hero-banner-spring.jpg", type: "Image", size: "2.4 MB", dimensions: "1920×1080", tags: ["banner", "spring"] },
-  { id: 2, name: "product-headphones-front.png", type: "Image", size: "1.1 MB", dimensions: "2000×2000", tags: ["product", "headphones"] },
-  { id: 3, name: "brand-video-2024.mp4", type: "Video", size: "48 MB", dimensions: "3840×2160", tags: ["brand", "video"] },
-  { id: 4, name: "catalog-spring-2026.pdf", type: "Document", size: "12 MB", dimensions: "–", tags: ["catalog", "pdf"] },
-  { id: 5, name: "lifestyle-office-setup.jpg", type: "Image", size: "3.8 MB", dimensions: "4000×2667", tags: ["lifestyle"] },
-  { id: 6, name: "product-keyboard-top.png", type: "Image", size: "980 KB", dimensions: "2000×2000", tags: ["product", "keyboard"] },
-  { id: 7, name: "unboxing-tutorial.mp4", type: "Video", size: "120 MB", dimensions: "1920×1080", tags: ["tutorial"] },
-  { id: 8, name: "brand-guidelines-v3.pdf", type: "Document", size: "8.2 MB", dimensions: "–", tags: ["brand", "guidelines"] },
-];
+import {
+  useAssetsQuery,
+  useCategoriesQuery,
+  useCreateCategoryMutation,
+  useCreateProductMutation,
+} from "@/hooks/usePimQueries";
 
 const assetTypeIcon: Record<string, typeof Image> = { Image, Video: Film, Document: FileText };
 const assetTypeColor: Record<string, string> = {
@@ -36,6 +31,8 @@ const assetTypeColor: Record<string, string> = {
 export default function AddProduct() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: digitalAssets = [] } = useAssetsQuery();
+  const { data: categories = [] } = useCategoriesQuery();
 
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
@@ -64,8 +61,56 @@ export default function AddProduct() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [assetPickerOpen, setAssetPickerOpen] = useState(false);
+  const [categoryCreateOpen, setCategoryCreateOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [assetSearch, setAssetSearch] = useState("");
   const [selectedAssets, setSelectedAssets] = useState<typeof digitalAssets>([]);
+  const createCategoryMutation = useCreateCategoryMutation();
+  const createProductMutation = useCreateProductMutation();
+
+  const handleCreateCategory = (payload: { name: string }) => {
+    createCategoryMutation.mutate(
+      {
+        name: payload.name,
+        products: 0,
+        subcategories: [],
+      },
+      {
+        onSuccess: (created) => {
+      setCategory(created.name);
+      setCategoryCreateOpen(false);
+      setNewCategoryName("");
+      toast({
+        title: "Category created",
+        description: `"${created.name}" is now available and selected.`,
+      });
+        },
+      }
+    );
+  };
+
+  const handleCreateProduct = () => {
+    createProductMutation.mutate(
+      {
+        name,
+        sku,
+        category: category || "Uncategorized",
+        status: status as "Published" | "In Review" | "Draft",
+        completeness: 35,
+        channels: 0,
+        image: null,
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Product created",
+            description: `"${name}" has been added successfully.`,
+          });
+          navigate("/products");
+        },
+      }
+    );
+  };
 
   const filteredAssets = digitalAssets.filter((a) =>
     a.name.toLowerCase().includes(assetSearch.toLowerCase()) ||
@@ -105,11 +150,7 @@ export default function AddProduct() {
       });
       return;
     }
-    toast({
-      title: "Product created",
-      description: `"${name}" has been added successfully.`,
-    });
-    navigate("/products");
+    handleCreateProduct();
   };
 
   return (
@@ -402,14 +443,30 @@ export default function AddProduct() {
                 </div>
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Select value={category} onValueChange={setCategory}>
+                    <Select
+                      value={category}
+                      onValueChange={(value) => {
+                        if (value === "__create__") {
+                          setCategoryCreateOpen(true);
+                          return;
+                        }
+                        setCategory(value);
+                      }}
+                    >
                     <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Audio">Audio</SelectItem>
-                      <SelectItem value="Accessories">Accessories</SelectItem>
-                      <SelectItem value="Input Devices">Input Devices</SelectItem>
-                      <SelectItem value="Video">Video</SelectItem>
-                      <SelectItem value="Furniture">Furniture</SelectItem>
+                        {categories.map((item) => (
+                          <SelectItem key={item.id} value={item.name}>
+                            {item.name}
+                          </SelectItem>
+                        ))}
+                        <SelectSeparator />
+                        <SelectItem
+                          value="__create__"
+                          className="font-semibold text-primary focus:text-primary"
+                        >
+                          + Create new category
+                        </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -459,6 +516,29 @@ export default function AddProduct() {
           </div>
         </div>
       </motion.div>
+      <Dialog open={categoryCreateOpen} onOpenChange={setCategoryCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create category</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="Category name"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setCategoryCreateOpen(false)}>Cancel</Button>
+              <Button
+                onClick={() => handleCreateCategory({ name: newCategoryName.trim() })}
+                disabled={!newCategoryName.trim() || createCategoryMutation.isPending}
+              >
+                Create
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
