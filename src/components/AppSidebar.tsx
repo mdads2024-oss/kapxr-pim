@@ -11,10 +11,17 @@ import {
   Plug,
   CreditCard,
   LogOut,
+  GitBranch,
+  Activity,
+  HelpCircle,
+  Building2,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import kapxrLogo from "@/assets/kapxr-logo.png";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Sidebar,
@@ -22,6 +29,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarGroupAction,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -29,10 +37,29 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+const SIDEBAR_GROUP_STATE_KEY = "kapxr:sidebar:groups";
+
+type GroupKey = "main" | "setup" | "manage" | "settings";
+type GroupState = Record<GroupKey, boolean>;
+
+const defaultGroupState: GroupState = {
+  main: true,
+  setup: true,
+  manage: true,
+  settings: true,
+};
+
 const mainItems = [
   { title: "Dashboard", url: "/app", icon: LayoutDashboard },
   { title: "Products", url: "/products", icon: Package },
-  { title: "Digital Assets", url: "/assets", icon: Image },
+  { title: "Assets", url: "/assets", icon: Image },
+  { title: "Workflows", url: "/workflows", icon: GitBranch },
+  { title: "Activity", url: "/activity", icon: Activity },
+];
+
+/** Catalog structure — aligned with demo "Setup" group */
+const setupItems = [
+  { title: "Brands", url: "/brands", icon: Building2 },
   { title: "Categories", url: "/categories", icon: FolderTree },
   { title: "Attributes", url: "/attributes", icon: Tags },
 ];
@@ -45,6 +72,7 @@ const manageItems = [
 ];
 
 const settingsItems = [
+  { title: "Help & Support", url: "/help", icon: HelpCircle },
   { title: "Billing", url: "/billing", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Sign Out", url: "/logout", icon: LogOut },
@@ -54,15 +82,66 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const isActive = (path: string) => location.pathname === path;
+  const [groupState, setGroupState] = useState<GroupState>(() => {
+    if (typeof window === "undefined") return defaultGroupState;
+    const saved = window.localStorage.getItem(SIDEBAR_GROUP_STATE_KEY);
+    if (!saved) return defaultGroupState;
+    try {
+      return { ...defaultGroupState, ...(JSON.parse(saved) as Partial<GroupState>) };
+    } catch {
+      return defaultGroupState;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(SIDEBAR_GROUP_STATE_KEY, JSON.stringify(groupState));
+  }, [groupState]);
+
+  const toggleGroup = (group: GroupKey) => {
+    setGroupState((prev) => ({ ...prev, [group]: !prev[group] }));
+  };
+
+  const expandedGroupState = useMemo<GroupState>(() => {
+    if (!collapsed) return groupState;
+    return { main: true, setup: true, manage: true, settings: true };
+  }, [collapsed, groupState]);
+
+  const isActive = (path: string) => {
+    const p = location.pathname;
+    if (path === "/app") return p === "/app" || p === "/dashboard";
+    if (path === "/products") return p.startsWith("/products");
+    if (path === "/categories") return p.startsWith("/categories");
+    if (path === "/attributes") return p.startsWith("/attributes");
+    if (path === "/brands") return p.startsWith("/brands");
+    return p === path;
+  };
 
   const renderGroup = (
+    groupKey: GroupKey,
     label: string,
-    items: typeof mainItems
+    items: typeof mainItems | typeof setupItems | typeof manageItems | typeof settingsItems
   ) => (
     <SidebarGroup>
-      {!collapsed && <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase text-[10px] tracking-widest font-semibold">{label}</SidebarGroupLabel>}
-      <SidebarGroupContent>
+      {!collapsed && label ? (
+        <>
+          <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase text-[10px] tracking-widest font-semibold">
+            {label}
+          </SidebarGroupLabel>
+          <SidebarGroupAction
+            aria-label={`${expandedGroupState[groupKey] ? "Collapse" : "Expand"} ${label} menu`}
+            title={`${expandedGroupState[groupKey] ? "Collapse" : "Expand"} ${label}`}
+            onClick={() => toggleGroup(groupKey)}
+          >
+            {expandedGroupState[groupKey] ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </SidebarGroupAction>
+        </>
+      ) : null}
+      <SidebarGroupContent className={expandedGroupState[groupKey] ? "" : "hidden"}>
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
@@ -93,17 +172,18 @@ export function AppSidebar() {
       <div className="flex items-center gap-2 px-4 py-5 border-b border-sidebar-border">
         <img src={kapxrLogo} alt="KapxrPIM" className="h-8 w-8 rounded-md object-cover" />
         {!collapsed && (
-          <span className="font-bold text-lg tracking-tight brand-gradient-animated">
+          <span className="text-sidebar-foreground font-bold text-lg tracking-tight">
             KapxrPIM
           </span>
         )}
       </div>
       <SidebarContent className="pt-2">
-        {renderGroup("Main", mainItems)}
-        {renderGroup("Manage", manageItems)}
+        {renderGroup("main", "Main", mainItems)}
+        {renderGroup("setup", "Setup", setupItems)}
+        {renderGroup("manage", "Manage", manageItems)}
       </SidebarContent>
       <SidebarFooter>
-        {renderGroup("", settingsItems)}
+        {renderGroup("settings", "More", settingsItems)}
       </SidebarFooter>
     </Sidebar>
   );

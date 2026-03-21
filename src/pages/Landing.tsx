@@ -224,34 +224,24 @@ export default function Landing() {
 
   return (
     <div
-      className="min-h-screen bg-background overflow-hidden landing-animated-bg"
+      className="min-h-screen bg-background overflow-hidden"
       onMouseMove={handleLandingMouseMove}
       onMouseLeave={resetLandingMouse}
     >
       <div className="pointer-events-none fixed inset-0 -z-10">
         <motion.div
-          className="absolute h-[340px] w-[340px] rounded-full bg-primary/14 blur-3xl"
+          className="absolute h-[320px] w-[320px] rounded-full bg-primary/10 blur-3xl"
           style={{ x: pageGlowX, y: pageGlowY }}
-          animate={shouldReduceMotion ? { opacity: 0 } : { opacity: [0.24, 0.38, 0.24] }}
-          transition={{ duration: 4.6, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl"
-          animate={shouldReduceMotion ? { opacity: 0.45 } : { scale: [1, 1.08, 1], opacity: [0.45, 0.7, 0.45] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-8 right-8 h-44 w-44 rounded-full bg-success/15 blur-3xl"
-          animate={shouldReduceMotion ? { opacity: 0.3 } : { y: [0, -14, 0], opacity: [0.3, 0.55, 0.3] }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+          animate={shouldReduceMotion ? { opacity: 0 } : { opacity: [0.18, 0.28, 0.18] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         />
       </div>
 
-      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2">
             <img src={kapxrLogo} alt="Kapxr" className="h-8 w-8 rounded-md" />
-            <span className="text-base font-semibold tracking-tight brand-gradient-animated">KapxrPIM</span>
+            <span className="text-base font-semibold tracking-tight">KapxrPIM</span>
           </div>
           <nav className="hidden lg:flex items-center gap-6 text-sm text-muted-foreground">
             <a
@@ -336,10 +326,10 @@ export default function Landing() {
             </a>
           </nav>
           <div className="flex items-center gap-2">
-            <Button asChild size="sm" className="brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
+            <Button asChild size="sm">
               <Link to="/signin">Sign in</Link>
             </Button>
-            <Button asChild size="sm" className="gap-1.5 brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
+            <Button asChild size="sm" className="gap-1.5">
               <Link to="/signup">
                 Get started <ArrowRight className="h-3.5 w-3.5" />
               </Link>
@@ -359,21 +349,21 @@ export default function Landing() {
             <Badge variant="secondary" className="text-xs w-fit">Built for Modern Commerce Teams</Badge>
             <h1 className="text-3xl font-semibold leading-tight tracking-tight md:text-5xl">
               The Product Experience Platform for{" "}
-              <span className="brand-gradient-animated">High-Scale Catalogs</span>
+              <span className="text-primary">High-Scale Catalogs</span>
             </h1>
             <p className="max-w-xl text-sm text-muted-foreground md:text-base">
               KapxrPIM helps teams centralize product data, streamline content operations, and publish faster across channels with confidence.
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="gap-2 brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
+              <Button asChild size="lg" className="gap-2">
                 <Link to="/signup">
                   Start Free Trial <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" className="brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
+              <Button asChild size="lg" variant="outline">
                 <Link to="/signin">Already have an account?</Link>
               </Button>
-              <Button asChild size="lg" className="gap-2 brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
+              <Button asChild size="lg" variant="outline" className="gap-2">
                 <Link to="/signin">
                   <CirclePlay className="h-4 w-4" />
                   Watch walkthrough
@@ -400,7 +390,7 @@ export default function Landing() {
           </motion.div>
 
           <motion.div variants={item} style={{ y: heroRightParallax }}>
-            <Card className="landing-gradient-surface shadow-sm relative overflow-hidden">
+            <Card className="bg-card border-border shadow-sm relative overflow-hidden">
               <motion.div
                 className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-primary/20 blur-2xl"
                 animate={shouldReduceMotion ? { opacity: 0.25 } : { scale: [1, 1.2, 1], opacity: [0.25, 0.45, 0.25] }}
@@ -557,7 +547,7 @@ export default function Landing() {
         </section>
 
         <section id="about" className="mx-auto w-full max-w-7xl px-4 py-10 md:px-6">
-          <Card className="landing-gradient-surface overflow-hidden">
+          <Card className="bg-card border-border overflow-hidden">
             <CardContent className="grid gap-6 p-5 md:grid-cols-2 md:p-6">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -666,9 +656,9 @@ export default function Landing() {
                 type="button"
                 size="sm"
                 className={cn(
-                  "h-9 min-w-[122px] rounded-lg px-5 landing-btn-motion transition-all",
+                  "h-9 min-w-[122px] rounded-lg px-5 transition-all",
                   billingInterval === "monthly"
-                    ? "brand-gradient-button shadow-[0_10px_18px_-12px_hsl(var(--primary)/0.7)]"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_10px_18px_-12px_hsl(var(--primary)/0.55)]"
                     : "bg-background text-muted-foreground border border-border/70 hover:bg-muted/40"
                 )}
                 onClick={() => setBillingInterval("monthly")}
@@ -679,9 +669,9 @@ export default function Landing() {
                 type="button"
                 size="sm"
                 className={cn(
-                  "h-9 min-w-[122px] rounded-lg px-5 landing-btn-motion transition-all",
+                  "h-9 min-w-[122px] rounded-lg px-5 transition-all",
                   billingInterval === "yearly"
-                    ? "brand-gradient-button shadow-[0_10px_18px_-12px_hsl(var(--primary)/0.7)]"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_10px_18px_-12px_hsl(var(--primary)/0.55)]"
                     : "bg-background text-muted-foreground border border-border/70 hover:bg-muted/40"
                 )}
                 onClick={() => setBillingInterval("yearly")}
@@ -702,7 +692,7 @@ export default function Landing() {
                   className={cn(
                     "group relative overflow-hidden border p-0 transition-transform duration-300 hover:-translate-y-1",
                     isStarter && "border-border/70 bg-card shadow-sm",
-                    isGrowth && "border-border/70 landing-gradient-surface text-foreground shadow-sm",
+                    isGrowth && "border-border bg-card text-foreground shadow-sm",
                     isPro && "border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-background text-foreground shadow-sm",
                     "hover:shadow-[0_24px_36px_-28px_hsl(var(--primary)/0.55)]"
                   )}
@@ -736,7 +726,7 @@ export default function Landing() {
                   <CardContent className="space-y-4 pb-5">
                     <Button
                       asChild
-                      className="w-full brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity"
+                      className="w-full"
                     >
                       <Link
                         to={buildSignupLink(plan.code)}
@@ -781,7 +771,7 @@ export default function Landing() {
         </section>
 
         <section id="cta" className="mx-auto w-full max-w-7xl px-4 pb-16 md:px-6">
-          <Card className="landing-gradient-surface relative overflow-hidden">
+          <Card className="bg-card border-border relative overflow-hidden">
             <motion.div
               className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/20 blur-2xl"
               animate={shouldReduceMotion ? { opacity: 0.25 } : { scale: [1, 1.15, 1], opacity: [0.25, 0.4, 0.25] }}
@@ -801,10 +791,10 @@ export default function Landing() {
                 <p className="text-sm text-muted-foreground">Start your KapxrPIM workspace and onboard your team in minutes.</p>
               </div>
               <div className="flex items-center gap-2">
-                <Button asChild className="brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
+                <Button asChild>
                   <Link to="/signin">Sign in</Link>
                 </Button>
-                <Button asChild className="gap-1.5 brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity">
+                <Button asChild className="gap-1.5">
                   <Link to="/signup">Start Free</Link>
                 </Button>
               </div>
@@ -817,7 +807,7 @@ export default function Landing() {
             <div className="lg:col-span-2">
               <div className="flex items-center gap-2">
                 <img src={kapxrLogo} alt="KapxrPIM" className="h-8 w-8 rounded-md" />
-                <span className="text-base font-semibold tracking-tight brand-gradient-animated">KapxrPIM</span>
+                <span className="text-base font-semibold tracking-tight">KapxrPIM</span>
               </div>
               <p className="mt-3 max-w-md text-sm text-muted-foreground">
                 The modern product operations platform for catalog-rich businesses. Centralize data, accelerate enrichment, and publish confidently across channels.
@@ -877,7 +867,7 @@ export default function Landing() {
                     placeholder="Enter your work email"
                     className="h-9 sm:w-64"
                   />
-                  <Button size="sm" className="h-9 brand-gradient-button landing-btn-motion hover:opacity-95 transition-opacity" type="submit" disabled={isSubmittingNewsletter}>
+                  <Button size="sm" className="h-9" type="submit" disabled={isSubmittingNewsletter}>
                     {isSubmittingNewsletter ? "Subscribing..." : "Subscribe"}
                   </Button>
                 </form>

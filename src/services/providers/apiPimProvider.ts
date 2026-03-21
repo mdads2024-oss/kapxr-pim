@@ -42,6 +42,21 @@ export const apiPimProvider: PIMProvider = {
     await apiClient.delete(`/products/${id}`);
     return true;
   },
+  async getBrands() {
+    throw new Error("ApiPIMProvider.getBrands is not implemented yet.");
+  },
+  async getBrandById() {
+    throw new Error("ApiPIMProvider.getBrandById is not implemented yet.");
+  },
+  async createBrand() {
+    throw new Error("ApiPIMProvider.createBrand is not implemented yet.");
+  },
+  async updateBrand() {
+    throw new Error("ApiPIMProvider.updateBrand is not implemented yet.");
+  },
+  async deleteBrand() {
+    throw new Error("ApiPIMProvider.deleteBrand is not implemented yet.");
+  },
   async getCategories() {
     const response = await apiClient.get<CategoryDto[]>("/categories");
     return response.map(mapCategoryDtoToModel);

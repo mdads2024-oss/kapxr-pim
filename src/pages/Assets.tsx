@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,7 @@ const typeColor: Record<string, string> = {
 };
 
 export default function Assets() {
+  useAppPageTitle("Digital Assets");
   const { toast } = useToast();
   const { data: assets = [], isLoading } = useAssetsQuery();
   const createAssetMutation = useCreateAssetMutation();
@@ -123,16 +124,11 @@ export default function Assets() {
   };
 
   if (isLoading) {
-    return (
-      <AppLayout title="Digital Assets">
-        <AppLoader message="Loading assets…" />
-      </AppLayout>
-    );
+    return <AppLoader message="Loading assets…" />;
   }
 
   return (
-    <AppLayout title="Digital Assets">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -179,25 +175,30 @@ export default function Assets() {
 
         <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "space-y-2"}>
           {/* Upload card */}
-          <Card className="border-dashed border-2 hover:border-primary/50 transition-colors cursor-pointer group" onClick={() => setUploadOpen(true)}>
+          <Card className="border-dashed border-2 border-border/50 hover:border-primary/50 transition-colors cursor-pointer group pim-card-shell" onClick={() => setUploadOpen(true)}>
             <CardContent className="p-0 h-48 flex flex-col items-center justify-center gap-2">
               <div className="h-12 w-12 rounded-full bg-accent flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                 <Plus className="h-6 w-6 text-accent-foreground group-hover:text-primary transition-colors" />
               </div>
-              <p className="text-sm text-muted-foreground">Drop files or click to upload</p>
+              <p className="text-xs leading-relaxed text-muted-foreground">Drop files or click to upload</p>
             </CardContent>
           </Card>
 
           {paginatedAssets.map((a) => {
             const Icon = typeIcon[a.type];
             return (
-              <Card key={a.id} className="overflow-hidden hover:shadow-md transition-shadow group">
+              <Card key={a.id} className="overflow-hidden hover:shadow-md transition-shadow group pim-card-shell">
                 <div className={`${viewMode === "grid" ? "h-32" : "h-20"} flex items-center justify-center ${typeColor[a.type]}`}>
                   <Icon className="h-10 w-10 opacity-60" />
                 </div>
                 <CardContent className="p-3 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium truncate flex-1">{a.name}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs leading-relaxed font-semibold truncate">{a.name}</p>
+                      <p className="pim-list-meta">
+                        {a.type} · {a.size} · {a.dimensions}
+                      </p>
+                    </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="p-1 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity">
@@ -214,14 +215,9 @@ export default function Assets() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{a.size}</span>
-                    <span>·</span>
-                    <span>{a.dimensions}</span>
-                  </div>
-                  <div className="flex gap-1 flex-wrap">
+                  <div className="flex gap-1 flex-wrap pt-0.5">
                     {a.tags.map((t) => (
-                      <Badge key={t} variant="secondary" className="text-[10px] px-1.5 py-0">{t}</Badge>
+                      <Badge key={t} variant="secondary" className="text-[10px] font-medium px-1.5 py-0">{t}</Badge>
                     ))}
                   </div>
                 </CardContent>
@@ -279,6 +275,5 @@ export default function Assets() {
           }}
         />
       </motion.div>
-    </AppLayout>
   );
 }

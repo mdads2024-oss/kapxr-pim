@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tags, Plus, Search, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Tags, Plus, Search, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -23,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AppPagination } from "@/components/shared/AppPagination";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { notifySuccess } from "@/lib/notify";
+import { toParamSlug } from "@/lib/slug";
 
 const typeColor: Record<string, string> = {
   Select: "bg-primary/10 text-primary",
@@ -33,6 +36,7 @@ const typeColor: Record<string, string> = {
 };
 
 export default function Attributes() {
+  useAppPageTitle("Attributes");
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: attributes = [], isLoading } = useAttributesQuery();
@@ -83,16 +87,12 @@ export default function Attributes() {
   };
 
   if (isLoading) {
-    return (
-      <AppLayout title="Attributes">
-        <AppLoader message="Loading attributes…" />
-      </AppLayout>
-    );
+    return <AppLoader message="Loading attributes…" />;
   }
 
   return (
-    <AppLayout title="Attributes">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+    <>
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -104,37 +104,48 @@ export default function Attributes() {
             />
           </div>
           <Button size="sm" className="h-9 gap-1.5" onClick={() => navigate("/attributes/new")}>
-            <Plus className="h-3.5 w-3.5" /> Add Attribute
+            <Plus className="h-3.5 w-3.5" /> Create New Attribute
           </Button>
         </div>
 
-        <Card>
+        <Card className="pim-card-shell">
           <CardContent className="p-0">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="pim-data-table">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="p-3 text-left font-medium text-muted-foreground">Attribute</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground hidden sm:table-cell">Type</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground hidden md:table-cell">Group</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground hidden md:table-cell">Categories</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground hidden lg:table-cell">Values</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">Required</th>
+                  <th className="pim-table-th">Attribute</th>
+                  <th className="pim-table-th hidden sm:table-cell">Type</th>
+                  <th className="pim-table-th hidden md:table-cell">Group</th>
+                  <th className="pim-table-th hidden md:table-cell">Categories</th>
+                  <th className="pim-table-th hidden lg:table-cell">Values</th>
+                  <th className="pim-table-th">Required</th>
                   <th className="p-3 w-10"></th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedAttributes.map((a) => (
-                  <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr
+                    key={a.id}
+                    className="border-b last:border-0 border-border/50 hover:bg-accent/30 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/attributes/${toParamSlug(a.name)}`)}
+                  >
                     <td className="p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-md bg-accent flex items-center justify-center">
-                          <Tags className="h-4 w-4 text-accent-foreground" />
+                      <div className="flex items-start gap-3">
+                        <div className="pim-list-icon bg-accent">
+                          <Tags className="h-3.5 w-3.5 text-accent-foreground" />
                         </div>
-                        <span className="font-medium">{a.name}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs leading-relaxed">
+                            <span className="font-semibold">{a.name}</span>{" "}
+                            <span className="text-muted-foreground sm:hidden">{a.type}</span>
+                          </p>
+                          <p className="pim-list-meta md:hidden">{a.group}</p>
+                        </div>
                       </div>
                     </td>
                     <td className="p-3 hidden sm:table-cell">
-                      <Badge variant="secondary" className={`text-[10px] ${typeColor[a.type]}`}>{a.type}</Badge>
+                      <Badge variant="secondary" className={`text-[10px] font-medium ${typeColor[a.type]}`}>{a.type}</Badge>
                     </td>
                     <td className="p-3 text-muted-foreground hidden md:table-cell">{a.group}</td>
                     <td className="p-3 hidden md:table-cell">
@@ -148,7 +159,7 @@ export default function Attributes() {
                           )}
                         </div>
                       ) : (
-                        <span className="text-xs text-muted-foreground">All</span>
+                        <span className="text-[10px] text-muted-foreground/70">All</span>
                       )}
                     </td>
                     <td className="p-3 text-muted-foreground hidden lg:table-cell">{a.values ?? "–"}</td>
@@ -156,25 +167,48 @@ export default function Attributes() {
                       {a.required ? (
                         <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">Required</Badge>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Optional</span>
+                        <span className="text-[10px] text-muted-foreground/70">Optional</span>
                       )}
                     </td>
-                    <td className="p-3">
+                    <td className="p-3" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1 rounded hover:bg-muted transition-colors">
+                          <button type="button" className="p-1 rounded hover:bg-muted transition-colors">
                             <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleRename(a.id, a.name)}>
-                            <Pencil className="h-3.5 w-3.5 mr-2" /> Rename
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-48 rounded-lg p-1 shadow-lg border-border/60"
+                          sideOffset={8}
+                        >
+                          <DropdownMenuLabel className="px-2 py-1 text-[10px] tracking-wide uppercase text-muted-foreground/90">
+                            Attribute actions
+                          </DropdownMenuLabel>
+                          <DropdownMenuItem
+                            className="h-7 rounded-md text-[13px] gap-2 px-2"
+                            onClick={() => navigate(`/attributes/${toParamSlug(a.name)}`)}
+                          >
+                            <Eye className="h-3.5 w-3.5" /> Open
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleToggleRequired(a.id, a.required)}>
-                            Toggle Required
+                          <DropdownMenuItem
+                            className="h-7 rounded-md text-[13px] gap-2 px-2"
+                            onClick={() => handleRename(a.id, a.name)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" /> Rename
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(a.id)}>
-                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                          <DropdownMenuItem
+                            className="h-7 rounded-md text-[13px] gap-2 px-2"
+                            onClick={() => handleToggleRequired(a.id, a.required)}
+                          >
+                            Toggle required
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="my-1" />
+                          <DropdownMenuItem
+                            className="h-7 rounded-md text-[13px] gap-2 px-2 text-destructive focus:text-destructive"
+                            onClick={() => setDeleteTarget(a.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -183,6 +217,7 @@ export default function Attributes() {
                 ))}
               </tbody>
             </table>
+            </div>
           </CardContent>
         </Card>
         <AppPagination page={safePage} pageSize={pageSize} totalItems={filteredAttributes.length} onPageChange={setPage} />
@@ -203,6 +238,6 @@ export default function Attributes() {
           }}
         />
       </motion.div>
-    </AppLayout>
+    </>
   );
 }

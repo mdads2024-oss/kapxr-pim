@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { notifyError, notifyInfo, notifySuccess } from "@/lib/notify";
 
 export default function BillingPage() {
+  useAppPageTitle("Billing");
   const { toast } = useToast();
   const [manageModalOpen, setManageModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -49,11 +50,7 @@ export default function BillingPage() {
       : 0;
   const checkoutPlanCode = upgradePlan?.code ?? activePlan?.code ?? "pro";
   if (isLoading) {
-    return (
-      <AppLayout title="Billing">
-        <AppLoader message="Loading billing…" />
-      </AppLayout>
-    );
+    return <AppLoader message="Loading billing…" />;
   }
 
   const usage = {
@@ -113,7 +110,7 @@ export default function BillingPage() {
   );
 
   return (
-    <AppLayout title="Billing">
+    <>
       <div className="max-w-6xl space-y-4">
         <Card className="border-border/70 bg-muted/20">
           <CardHeader className="pb-2.5">
@@ -317,6 +314,6 @@ export default function BillingPage() {
           />
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </>
   );
 }

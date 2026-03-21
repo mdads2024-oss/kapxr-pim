@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ const attributeTypes = [
 ];
 
 export default function AddAttribute() {
+  useAppPageTitle("Create New Attribute");
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: categories = [] } = useCategoriesQuery();
@@ -90,8 +91,7 @@ export default function AddAttribute() {
   };
 
   return (
-    <AppLayout title="Add Attribute">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/attributes")}>
             <ArrowLeft className="h-4 w-4" />
@@ -316,7 +316,7 @@ export default function AddAttribute() {
 
             <div className="flex flex-col gap-2">
               <Button onClick={handleSave} className="w-full">
-                Create Attribute
+                Create New Attribute
               </Button>
               <Button variant="outline" onClick={() => navigate("/attributes")} className="w-full">
                 Cancel
@@ -325,6 +325,5 @@ export default function AddAttribute() {
           </div>
         </div>
       </motion.div>
-    </AppLayout>
   );
 }

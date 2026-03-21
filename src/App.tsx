@@ -23,8 +23,16 @@ import Landing from "./pages/Landing";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import SignOut from "./pages/SignOut";
+import Workflow from "./pages/Workflow";
+import ActivityPage from "./pages/Activity";
+import CategoryDetail from "./pages/CategoryDetail";
+import AttributeDetail from "./pages/AttributeDetail";
+import Brands from "./pages/Brands";
+import AddBrand from "./pages/AddBrand";
+import BrandDetail from "./pages/BrandDetail";
+import Help from "./pages/Help";
 import { isAuthenticated } from "./lib/auth";
-
+import { AuthenticatedLayout } from "./components/AppLayout";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +54,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Navigate to="/signin" replace />} />
 
           <Route element={<PublicOnly />}>
             <Route path="/signin" element={<SignIn />} />
@@ -53,22 +62,33 @@ const App = () => (
           </Route>
 
           <Route element={<RequireAuth />}>
-            <Route path="/app" element={<Index />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/products/new" element={<AddProduct />} />
-            <Route path="/products/:id" element={<ProductDetail />} />
-            <Route path="/assets" element={<Assets />} />
-            <Route path="/categories" element={<Categories />} />
-            <Route path="/categories/new" element={<AddCategory />} />
-            <Route path="/attributes" element={<Attributes />} />
-            <Route path="/attributes/new" element={<AddAttribute />} />
-            <Route path="/integrations" element={<Integrations />} />
-            <Route path="/import-export" element={<ImportExport />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/team" element={<Team />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/billing" element={<BillingPage />} />
             <Route path="/logout" element={<SignOut />} />
+            <Route element={<AuthenticatedLayout />}>
+              <Route path="/app" element={<Index />} />
+              <Route path="/dashboard" element={<Navigate to="/app" replace />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/new" element={<AddProduct />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/assets" element={<Assets />} />
+              <Route path="/workflows" element={<Workflow />} />
+              <Route path="/activity" element={<ActivityPage />} />
+              <Route path="/categories" element={<Categories />} />
+              <Route path="/categories/new" element={<AddCategory />} />
+              <Route path="/categories/:slug" element={<CategoryDetail />} />
+              <Route path="/attributes" element={<Attributes />} />
+              <Route path="/attributes/new" element={<AddAttribute />} />
+              <Route path="/attributes/:name" element={<AttributeDetail />} />
+              <Route path="/brands" element={<Brands />} />
+              <Route path="/brands/new" element={<AddBrand />} />
+              <Route path="/brands/:id" element={<BrandDetail />} />
+              <Route path="/integrations" element={<Integrations />} />
+              <Route path="/import-export" element={<ImportExport />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/help" element={<Help />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/billing" element={<BillingPage />} />
+            </Route>
           </Route>
 
           <Route path="*" element={<NotFound />} />

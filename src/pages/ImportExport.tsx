@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,16 +9,13 @@ import { useCreateImportExportHistoryMutation, useImportExportHistoryQuery } fro
 import { useToast } from "@/hooks/use-toast";
 
 export default function ImportExport() {
+  useAppPageTitle("Import / Export");
   const { toast } = useToast();
   const { data: history = [], isLoading } = useImportExportHistoryQuery();
   const createHistoryMutation = useCreateImportExportHistoryMutation();
 
   if (isLoading) {
-    return (
-      <AppLayout title="Import / Export">
-        <AppLoader message="Loading activity…" />
-      </AppLayout>
-    );
+    return <AppLoader message="Loading activity…" />;
   }
 
   const addHistory = async (type: "Import" | "Export") => {
@@ -37,10 +34,9 @@ export default function ImportExport() {
   };
 
   return (
-    <AppLayout title="Import / Export">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="border-dashed border-2 hover:border-primary/50 transition-colors cursor-pointer group">
+          <Card className="border-dashed border-2 border-border/50 hover:border-primary/50 transition-colors cursor-pointer group pim-card-shell">
             <CardContent className="p-8 flex flex-col items-center text-center gap-3">
               <div className="h-14 w-14 rounded-full bg-accent flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                 <Upload className="h-7 w-7 text-accent-foreground group-hover:text-primary transition-colors" />
@@ -52,7 +48,7 @@ export default function ImportExport() {
               <Button variant="outline" size="sm" onClick={() => addHistory("Import")}>Select Files</Button>
             </CardContent>
           </Card>
-          <Card className="border-dashed border-2 hover:border-primary/50 transition-colors cursor-pointer group">
+          <Card className="border-dashed border-2 border-border/50 hover:border-primary/50 transition-colors cursor-pointer group pim-card-shell">
             <CardContent className="p-8 flex flex-col items-center text-center gap-3">
               <div className="h-14 w-14 rounded-full bg-accent flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                 <Download className="h-7 w-7 text-accent-foreground group-hover:text-primary transition-colors" />
@@ -66,27 +62,34 @@ export default function ImportExport() {
           </Card>
         </div>
 
-        <Card>
+        <Card className="pim-card-shell">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Recent Activity</CardTitle>
+            <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y">
+            <div className="divide-y divide-border/50">
               {history.map((h) => (
-                <div key={h.id} className="flex items-center justify-between px-6 py-3">
-                  <div className="flex items-center gap-3">
-                    <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">{h.name}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
+                <div key={h.id} className="flex items-start justify-between gap-3 px-6 py-3.5 hover:bg-accent/30 transition-colors">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="pim-list-icon bg-primary/10 mt-0.5">
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs leading-relaxed">
+                        <span className="font-semibold truncate block sm:inline">{h.name}</span>{" "}
+                        <span className="text-muted-foreground hidden sm:inline">
+                          {h.records > 0 ? `· ${h.records.toLocaleString()} records` : ""}
+                        </span>
+                      </p>
+                      <p className="pim-list-meta flex items-center gap-1">
+                        <Clock className="h-3 w-3 shrink-0" />
                         <span>{h.date} at {h.time}</span>
-                        {h.records > 0 && <span>· {h.records.toLocaleString()} records</span>}
-                      </div>
+                        {h.records > 0 && <span className="sm:hidden">· {h.records.toLocaleString()} records</span>}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-[10px] ${h.type === "Import" ? "bg-primary/10 text-primary border-primary/20" : "bg-accent text-accent-foreground"}`}>
+                  <div className="flex items-center gap-2 shrink-0 pt-0.5">
+                    <Badge variant="outline" className={`text-[10px] font-medium ${h.type === "Import" ? "bg-primary/10 text-primary border-primary/20" : "bg-accent text-accent-foreground"}`}>
                       {h.type}
                     </Badge>
                     {h.status === "Completed" ? (
@@ -101,6 +104,5 @@ export default function ImportExport() {
           </CardContent>
         </Card>
       </motion.div>
-    </AppLayout>
   );
 }

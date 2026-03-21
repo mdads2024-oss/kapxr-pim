@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ const assetTypeColor: Record<string, string> = {
 };
 
 export default function AddProduct() {
+  useAppPageTitle("Add Product");
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: digitalAssets = [] } = useAssetsQuery();
@@ -154,8 +155,8 @@ export default function AddProduct() {
   };
 
   return (
-    <AppLayout title="Add Product">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <>
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -539,6 +540,6 @@ export default function AddProduct() {
           </div>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </>
   );
 }

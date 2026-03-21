@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const productId = Number(id);
   const { data: product, isLoading } = useProductQuery(productId);
+  useAppPageTitle(isLoading ? "Product" : !product ? "Product not found" : product.name);
   const updateProductMutation = useUpdateProductMutation();
   const deleteProductMutation = useDeleteProductMutation();
   const createProductMutation = useCreateProductMutation();
@@ -82,27 +83,20 @@ export default function ProductDetail() {
   };
 
   if (isLoading) {
-    return (
-      <AppLayout title="Product">
-        <AppLoader message="Loading product…" />
-      </AppLayout>
-    );
+    return <AppLoader message="Loading product…" />;
   }
 
   if (!product) {
     return (
-      <AppLayout>
-        <div className="space-y-3">
-          <h1 className="text-lg font-semibold">Product not found</h1>
-          <Button onClick={() => navigate("/products")}>Back to Products</Button>
-        </div>
-      </AppLayout>
+      <div className="space-y-3">
+        <h1 className="text-lg font-semibold">Product not found</h1>
+        <Button onClick={() => navigate("/products")}>Back to Products</Button>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/products")}>
@@ -202,6 +196,5 @@ export default function ProductDetail() {
           </div>
         </div>
       </motion.div>
-    </AppLayout>
   );
 }

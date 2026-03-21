@@ -1,11 +1,10 @@
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +27,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AppPagination } from "@/components/shared/AppPagination";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
-import { AppAlertDialog } from "@/components/shared/AppAlertDialog";
 import { notifyError, notifySuccess } from "@/lib/notify";
 
 const statusColor: Record<string, string> = {
@@ -38,6 +36,7 @@ const statusColor: Record<string, string> = {
 };
 
 export default function Products() {
+  useAppPageTitle("Products");
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: products = [], isLoading } = useProductsQuery();
@@ -46,12 +45,9 @@ export default function Products() {
   const deleteProductMutation = useDeleteProductMutation();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "Published" | "In Review" | "Draft">("all");
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [page, setPage] = useState(1);
   const pageSize = 8;
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
-  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-  const [alertState, setAlertState] = useState<{ title: string; description: string } | null>(null);
 
   const filteredProducts = useMemo(
     () =>
@@ -74,11 +70,7 @@ export default function Products() {
   }, [searchTerm, statusFilter]);
 
   if (isLoading) {
-    return (
-      <AppLayout title="Products">
-        <AppLoader message="Loading products…" />
-      </AppLayout>
-    );
+    return <AppLoader message="Loading products…" />;
   }
 
   const paginatedProducts = useMemo(() => {
@@ -86,38 +78,9 @@ export default function Products() {
     return filteredProducts.slice(start, start + pageSize);
   }, [filteredProducts, safePage]);
 
-  const allVisibleSelected =
-    paginatedProducts.length > 0 && paginatedProducts.every((p) => selectedIds.includes(p.id));
-
-  const toggleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedIds((prev) => [...new Set([...prev, ...paginatedProducts.map((p) => p.id)])]);
-      return;
-    }
-    setSelectedIds((prev) => prev.filter((id) => !paginatedProducts.some((p) => p.id === id)));
-  };
-
-  const toggleSelected = (id: number, checked: boolean) => {
-    setSelectedIds((prev) => (checked ? [...new Set([...prev, id])] : prev.filter((current) => current !== id)));
-  };
-
   const handleDelete = async (id: number) => {
     await deleteProductMutation.mutateAsync(id);
-    setSelectedIds((prev) => prev.filter((current) => current !== id));
     notifySuccess(toast, "Product deleted");
-  };
-
-  const handleBulkDelete = async () => {
-    if (!selectedIds.length) {
-      setAlertState({
-        title: "No products selected",
-        description: "Please select at least one product to continue.",
-      });
-      return;
-    }
-    await Promise.all(selectedIds.map((id) => deleteProductMutation.mutateAsync(id)));
-    setSelectedIds([]);
-    notifySuccess(toast, "Selected products deleted");
   };
 
   const handleDuplicate = async (id: number) => {
@@ -137,8 +100,8 @@ export default function Products() {
   };
 
   return (
-    <AppLayout title="Products">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+    <>
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -162,11 +125,6 @@ export default function Products() {
                 <SelectItem value="Draft">Draft</SelectItem>
               </SelectContent>
             </Select>
-            {selectedIds.length > 0 && (
-              <Button variant="destructive" size="sm" className="h-9" onClick={() => setShowBulkDeleteConfirm(true)}>
-                Delete Selected ({selectedIds.length})
-              </Button>
-            )}
           </div>
           <Button size="sm" className="h-9 gap-1.5" onClick={() => navigate("/products/new")}>
             <Plus className="h-3.5 w-3.5" /> Add Product
@@ -174,54 +132,47 @@ export default function Products() {
         </div>
 
         {/* Table */}
-        <Card>
+        <Card className="pim-card-shell">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="pim-data-table">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th className="p-3 w-10">
-                      <Checkbox
-                        checked={allVisibleSelected}
-                        onCheckedChange={(checked) => toggleSelectAll(Boolean(checked))}
-                      />
-                    </th>
-                    <th className="p-3 text-left font-medium text-muted-foreground">Product</th>
-                    <th className="p-3 text-left font-medium text-muted-foreground hidden md:table-cell">SKU</th>
-                    <th className="p-3 text-left font-medium text-muted-foreground hidden lg:table-cell">Category</th>
-                    <th className="p-3 text-left font-medium text-muted-foreground hidden sm:table-cell">Completeness</th>
-                    <th className="p-3 text-left font-medium text-muted-foreground">Status</th>
-                    <th className="p-3 text-left font-medium text-muted-foreground hidden lg:table-cell">Channels</th>
+                    <th className="pim-table-th">Product</th>
+                    <th className="pim-table-th hidden md:table-cell">SKU</th>
+                    <th className="pim-table-th hidden lg:table-cell">Category</th>
+                    <th className="pim-table-th hidden sm:table-cell">Completeness</th>
+                    <th className="pim-table-th">Status</th>
+                    <th className="pim-table-th hidden lg:table-cell">Channels</th>
                     <th className="p-3 w-10"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedProducts.map((p) => (
-                    <tr key={p.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/products/${p.id}`)}>
-                      <td className="p-3" onClick={(event) => event.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedIds.includes(p.id)}
-                          onCheckedChange={(checked) => toggleSelected(p.id, Boolean(checked))}
-                        />
-                      </td>
+                    <tr key={p.id} className="border-b last:border-0 border-border/50 hover:bg-accent/30 transition-colors cursor-pointer" onClick={() => navigate(`/products/${p.id}`)}>
                       <td className="p-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-md bg-secondary flex items-center justify-center shrink-0">
-                            <Package className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex items-start gap-3">
+                          <div className="pim-list-icon bg-primary/10">
+                            <Package className="h-3.5 w-3.5 text-primary" />
                           </div>
-                          <span className="font-medium">{p.name}</span>
+                          <div className="min-w-0">
+                            <p className="text-xs leading-relaxed">
+                              <span className="font-semibold">{p.name}</span>
+                            </p>
+                            <p className="pim-list-meta md:hidden">{p.sku} · {p.category}</p>
+                          </div>
                         </div>
                       </td>
                       <td className="p-3 text-muted-foreground hidden md:table-cell">{p.sku}</td>
-                      <td className="p-3 hidden lg:table-cell">{p.category}</td>
+                      <td className="p-3 text-muted-foreground hidden lg:table-cell">{p.category}</td>
                       <td className="p-3 hidden sm:table-cell">
                         <div className="flex items-center gap-2 w-28">
-                          <Progress value={p.completeness} className="h-1.5" />
-                          <span className="text-xs text-muted-foreground">{p.completeness}%</span>
+                          <Progress value={p.completeness} className="h-1" />
+                          <span className="text-[10px] text-muted-foreground/70 font-medium tabular-nums">{p.completeness}%</span>
                         </div>
                       </td>
                       <td className="p-3">
-                        <Badge variant="outline" className={`text-[10px] ${statusColor[p.status]}`}>{p.status}</Badge>
+                        <Badge variant="outline" className={`text-[10px] font-medium ${statusColor[p.status]}`}>{p.status}</Badge>
                       </td>
                       <td className="p-3 hidden lg:table-cell text-muted-foreground">{p.channels}</td>
                       <td className="p-3" onClick={(event) => event.stopPropagation()}>
@@ -306,33 +257,6 @@ export default function Products() {
           }
         }}
       />
-
-      <ConfirmActionDialog
-        open={showBulkDeleteConfirm}
-        onOpenChange={setShowBulkDeleteConfirm}
-        title="Delete selected products?"
-        description={`This will permanently delete ${selectedIds.length} product(s).`}
-        confirmLabel="Delete all"
-        destructive
-        onConfirm={async () => {
-          try {
-            await handleBulkDelete();
-          } catch (error) {
-            notifyError(toast, "Bulk delete failed", "Please try again.");
-          } finally {
-            setShowBulkDeleteConfirm(false);
-          }
-        }}
-      />
-
-      <AppAlertDialog
-        open={alertState !== null}
-        onOpenChange={(open) => {
-          if (!open) setAlertState(null);
-        }}
-        title={alertState?.title ?? ""}
-        description={alertState?.description ?? ""}
-      />
-    </AppLayout>
+    </>
   );
 }

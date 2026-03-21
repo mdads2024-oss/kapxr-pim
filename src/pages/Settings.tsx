@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,7 @@ function getStoredAccordionState(): AccordionPersistState {
 }
 
 export default function SettingsPage() {
+  useAppPageTitle("Settings");
   const navigate = useNavigate();
   const [quickTipsOpen, setQuickTipsOpen] = useState(false);
   const [accordionState, setAccordionState] = useState<AccordionPersistState>(() => getStoredAccordionState());
@@ -80,7 +81,7 @@ export default function SettingsPage() {
   }, [accordionState]);
 
   return (
-    <AppLayout title="Settings">
+    <>
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -185,21 +186,21 @@ export default function SettingsPage() {
               <CardContent className="space-y-2">
                 <div className="flex items-start justify-between gap-3 rounded-lg border border-border/60 p-2.5">
                   <div>
-                    <p className="text-[13px] font-medium">Product updates</p>
+                    <p className="text-xs font-semibold">Product updates</p>
                     <p className="text-xs text-muted-foreground">Notify when product records are changed.</p>
                   </div>
                   <Switch defaultChecked />
                 </div>
                 <div className="flex items-start justify-between gap-3 rounded-lg border border-border/60 p-2.5">
                   <div>
-                    <p className="text-[13px] font-medium">Import/Export alerts</p>
+                    <p className="text-xs font-semibold">Import/Export alerts</p>
                     <p className="text-xs text-muted-foreground">Receive completion and failure updates.</p>
                   </div>
                   <Switch defaultChecked />
                 </div>
                 <div className="flex items-start justify-between gap-3 rounded-lg border border-border/60 p-2.5">
                   <div>
-                    <p className="text-[13px] font-medium">Team activity</p>
+                    <p className="text-xs font-semibold">Team activity</p>
                     <p className="text-xs text-muted-foreground">Track role changes and member actions.</p>
                   </div>
                   <Switch />
@@ -239,7 +240,7 @@ export default function SettingsPage() {
                       <Separator />
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-[13px] font-medium">Require 2FA for admins</p>
+                          <p className="text-xs font-semibold">Require 2FA for admins</p>
                           <p className="text-xs text-muted-foreground">Recommended for production teams.</p>
                         </div>
                         <Switch defaultChecked />
@@ -247,7 +248,7 @@ export default function SettingsPage() {
                       <Separator />
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-[13px] font-medium">IP allowlist mode</p>
+                          <p className="text-xs font-semibold">IP allowlist mode</p>
                           <p className="text-xs text-muted-foreground">Restrict dashboard access to trusted networks.</p>
                         </div>
                         <Switch />
@@ -304,6 +305,6 @@ export default function SettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </>
   );
 }

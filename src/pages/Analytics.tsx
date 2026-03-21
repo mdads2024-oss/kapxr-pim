@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, TrendingUp, Eye, FileCheck } from "lucide-react";
@@ -21,6 +21,7 @@ import {
 const metricIcons = [FileCheck, TrendingUp, Eye, BarChart3];
 
 export default function Analytics() {
+  useAppPageTitle("Analytics");
   const { data: metrics = [], isLoading: metricsLoading } = useAnalyticsMetricsQuery();
   const { data: products = [], isLoading: productsLoading } = useProductsQuery();
   const { data: assets = [], isLoading: assetsLoading } = useAssetsQuery();
@@ -43,11 +44,7 @@ export default function Analytics() {
   const categoryData = categories.slice(0, 6).map((c) => ({ name: c.name, products: c.products }));
 
   if (isLoading) {
-    return (
-      <AppLayout title="Analytics">
-        <AppLoader message="Loading analytics…" />
-      </AppLayout>
-    );
+    return <AppLoader message="Loading analytics…" />;
   }
 
   const trendData = [
@@ -59,8 +56,7 @@ export default function Analytics() {
   ];
 
   return (
-    <AppLayout title="Analytics">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {metrics.map((m, index) => {
             const Icon = metricIcons[index % metricIcons.length];
@@ -172,6 +168,5 @@ export default function Analytics() {
           </Card>
         </div>
       </motion.div>
-    </AppLayout>
   );
 }

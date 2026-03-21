@@ -3,19 +3,27 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Bell, Monitor, Moon, Search, Sun } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useAssetsQuery, useCategoriesQuery, useProductsQuery } from "@/hooks/usePimQueries";
-import { cn } from "@/lib/utils";
 import { applyThemeToDocument, getTheme, getThemeEventName, setTheme, type AppTheme } from "@/lib/theme";
+import type { AppShellOutletContext } from "@/hooks/useAppPageTitle";
 
-interface AppLayoutProps {
-  children: React.ReactNode;
-  title?: string;
-}
-
-export function AppLayout({ children, title }: AppLayoutProps) {
+/**
+ * Single persistent shell for all authenticated routes so the sidebar (and its scroll
+ * position) is not remounted on navigation. Child routes set the header via useAppPageTitle().
+ */
+export function AuthenticatedLayout() {
   const navigate = useNavigate();
+  const [pageTitle, setPageTitleState] = useState("");
+  const setPageTitle = useCallback((title: string) => {
+    setPageTitleState(title);
+  }, []);
+  const outletContext = useMemo<AppShellOutletContext>(
+    () => ({ setPageTitle }),
+    [setPageTitle]
+  );
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [theme, setThemeState] = useState<AppTheme>(() => getTheme());
@@ -119,11 +127,11 @@ export function AppLayout({ children, title }: AppLayoutProps) {
           >
             <div className="flex items-center gap-3">
               <SidebarTrigger />
-              {title && (
+              {pageTitle ? (
                 <h1 className="text-base font-semibold tracking-tight md:text-lg">
-                  {title}
+                  {pageTitle}
                 </h1>
-              )}
+              ) : null}
             </div>
             <div className="flex items-center gap-3">
               <div className="relative hidden md:block">
@@ -154,12 +162,12 @@ export function AppLayout({ children, title }: AppLayoutProps) {
                           }}
                           className="w-full text-left rounded-sm px-2 py-1.5 hover:bg-accent transition-colors"
                         >
-                          <div className="text-[13px]">{item.label}</div>
-                          <div className="text-[10px] text-muted-foreground">{item.type}</div>
+                          <div className="text-xs leading-relaxed font-semibold truncate">{item.label}</div>
+                          <div className="text-[10px] text-muted-foreground/70">{item.type}</div>
                         </button>
                       ))
                     ) : (
-                      <div className="px-2 py-1.5 text-[13px] text-muted-foreground">No matches found</div>
+                      <div className="px-2 py-1.5 text-xs text-muted-foreground">No matches found</div>
                     )}
                   </div>
                 )}
@@ -190,9 +198,9 @@ export function AppLayout({ children, title }: AppLayoutProps) {
             </div>
           </header>
           <main
-            className="app-content flex-1 overflow-auto p-4 text-[13px] md:p-5"
+            className="app-content flex-1 overflow-auto p-4 text-sm antialiased md:p-5"
           >
-            {children}
+            <Outlet context={outletContext} />
           </main>
         </div>
       </div>

@@ -19,6 +19,23 @@ export interface Asset {
   date: string;
 }
 
+export interface Brand {
+  id: number;
+  uuid: string;
+  name: string;
+  description: string;
+  website: string;
+  status: "Active" | "Inactive";
+  products: number;
+  logo: string | null;
+  contactEmail: string;
+  contactPhone: string;
+  country: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+}
+
 export interface Category {
   id: number;
   name: string;

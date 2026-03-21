@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { notifySuccess } from "@/lib/notify";
 
 export default function Integrations() {
+  useAppPageTitle("Integrations");
   const { toast } = useToast();
   const { data: integrations = [], isLoading } = useIntegrationsQuery();
   const updateIntegrationMutation = useUpdateIntegrationMutation();
@@ -43,11 +44,7 @@ export default function Integrations() {
   };
 
   if (isLoading) {
-    return (
-      <AppLayout title="Integrations">
-        <AppLoader message="Loading integrations…" />
-      </AppLayout>
-    );
+    return <AppLoader message="Loading integrations…" />;
   }
 
   const handleToggle = async (id: number, connected: boolean) => {
@@ -70,8 +67,8 @@ export default function Integrations() {
   };
 
   return (
-    <AppLayout title="Integrations">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+    <>
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">Connect third-party platforms to sync product data automatically</p>
           <Button size="sm" className="h-9 gap-1.5" onClick={() => toast({ title: "Use Configure on a card to connect details" })}>
@@ -187,6 +184,6 @@ export default function Integrations() {
           }}
         />
       </motion.div>
-    </AppLayout>
+    </>
   );
 }

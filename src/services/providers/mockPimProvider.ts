@@ -3,6 +3,7 @@ import {
   analyticsMetricSeed,
   assetTableSeed,
   attributeTableSeed,
+  brandTableSeed,
   categoryTableSeed,
   importExportTableSeed,
   integrationTableSeed,
@@ -10,6 +11,7 @@ import {
   teamMemberSeed,
 } from "@/mockdb/tables";
 import type {
+  Brand,
   Category,
   Product,
   Asset,
@@ -21,8 +23,10 @@ import type {
 import type { PIMProvider } from "@/services/providers/pimProvider";
 
 const seedVersion = "2026-03-20-expanded-seed-v1";
+const brandSeedVersion = "2026-03-21-brands-v1";
 
 const productStorage = new MockStorage<Product>("kapxr:products", productTableSeed, { seedVersion });
+const brandStorage = new MockStorage<Brand>("kapxr:brands", brandTableSeed, { seedVersion: brandSeedVersion });
 const categoryStorage = new MockStorage<Category>("kapxr:categories", categoryTableSeed, { seedVersion });
 const assetStorage = new MockStorage<Asset>("kapxr:assets", assetTableSeed, { seedVersion });
 const integrationStorage = new MockStorage<Integration>("kapxr:integrations", integrationTableSeed, { seedVersion });
@@ -55,6 +59,26 @@ export const mockPimProvider: PIMProvider = {
 
   async deleteProduct(id) {
     return productStorage.remove(id);
+  },
+
+  async getBrands() {
+    return brandStorage.getAll();
+  },
+
+  async getBrandById(id) {
+    return brandStorage.getById(id);
+  },
+
+  async createBrand(data) {
+    return brandStorage.create(data);
+  },
+
+  async updateBrand(id, data) {
+    return brandStorage.update(id, data);
+  },
+
+  async deleteBrand(id) {
+    return brandStorage.remove(id);
   },
 
   async getCategories() {

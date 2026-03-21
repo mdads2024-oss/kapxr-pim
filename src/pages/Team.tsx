@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/AppLayout";
+import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ const inviteStatusColor: Record<"Active" | "Invited", string> = {
 };
 
 export default function Team() {
+  useAppPageTitle("Team");
   const { toast } = useToast();
   const { data: members = [], isLoading } = useTeamMembersQuery();
   const createTeamMemberMutation = useCreateTeamMemberMutation();
@@ -53,20 +54,16 @@ export default function Team() {
   const pageSize = 8;
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
-  if (isLoading) {
-    return (
-      <AppLayout title="Team">
-        <AppLoader message="Loading team…" />
-      </AppLayout>
-    );
-  }
-
   const totalPages = Math.max(1, Math.ceil(members.length / pageSize));
   const safePage = Math.min(page, totalPages);
   const paginatedMembers = useMemo(() => {
     const start = (safePage - 1) * pageSize;
     return members.slice(start, start + pageSize);
   }, [members, safePage]);
+
+  if (isLoading) {
+    return <AppLoader message="Loading team…" />;
+  }
 
   const handleInvite = async () => {
     if (!inviteName.trim() || !inviteEmail.trim()) return;
@@ -127,49 +124,51 @@ export default function Team() {
   };
 
   return (
-    <AppLayout title="Team">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+    <>
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">{members.length} team members</p>
           <Button size="sm" className="h-9 gap-1.5" onClick={() => setInviteOpen(true)}>
             <Plus className="h-3.5 w-3.5" /> Invite Member
           </Button>
         </div>
-        <Card>
+        <Card className="pim-card-shell">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="pim-data-table">
                 <thead>
-                  <tr className="border-b bg-muted/40">
-                    <th className="px-6 py-3 text-left font-medium text-muted-foreground">Team Member</th>
-                    <th className="px-6 py-3 text-left font-medium text-muted-foreground">Role</th>
-                    <th className="px-6 py-3 text-left font-medium text-muted-foreground">Invite Status</th>
-                    <th className="px-6 py-3 text-right font-medium text-muted-foreground">Actions</th>
+                  <tr className="border-b bg-muted/50">
+                    <th className="pim-table-th">Team Member</th>
+                    <th className="pim-table-th">Role</th>
+                    <th className="pim-table-th">Invite Status</th>
+                    <th className="pim-table-th !text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedMembers.map((m) => (
-                    <tr key={m.email} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9">
-                            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">{m.initials}</AvatarFallback>
+                    <tr key={m.email} className="border-b last:border-0 border-border/50 hover:bg-accent/30 transition-colors">
+                      <td className="p-3">
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-8 w-8 shrink-0 mt-0.5">
+                            <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-semibold">{m.initials}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <p className="text-sm font-medium">{m.name}</p>
-                            <p className="text-xs text-muted-foreground">{m.email}</p>
+                          <div className="min-w-0">
+                            <p className="text-xs leading-relaxed">
+                              <span className="font-semibold">{m.name}</span>
+                            </p>
+                            <p className="pim-list-meta">{m.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <Badge variant="outline" className={`text-[10px] ${roleColor[m.role]}`}>{m.role}</Badge>
+                      <td className="p-3">
+                        <Badge variant="outline" className={`text-[10px] font-medium ${roleColor[m.role]}`}>{m.role}</Badge>
                       </td>
-                      <td className="px-6 py-4">
-                        <Badge variant="outline" className={`text-[10px] ${inviteStatusColor[m.status]}`}>
+                      <td className="p-3">
+                        <Badge variant="outline" className={`text-[10px] font-medium ${inviteStatusColor[m.status]}`}>
                           {m.status === "Invited" ? "Pending Invite" : "Accepted"}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="p-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <button
                             className="h-8 w-8 rounded-md hover:bg-muted transition-colors inline-flex items-center justify-center"
@@ -296,6 +295,6 @@ export default function Team() {
           }}
         />
       </motion.div>
-    </AppLayout>
+    </>
   );
 }

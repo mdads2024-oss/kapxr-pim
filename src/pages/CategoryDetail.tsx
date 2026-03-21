@@ -1,4 +1,5 @@
 import { useAppPageTitle } from "@/hooks/useAppPageTitle";
+import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,33 +8,55 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, X, FolderTree, Upload } from "lucide-react";
+import { ArrowLeft, Plus, X, FolderTree, Upload, Copy, Check, Package } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useCategoriesQuery, useCreateCategoryMutation } from "@/hooks/usePimQueries";
+import { useCategoriesQuery, useUpdateCategoryMutation } from "@/hooks/usePimQueries";
+import { toParamSlug } from "@/lib/slug";
 
-export default function AddCategory() {
-  useAppPageTitle("Create New Category");
+export default function CategoryDetail() {
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { data: categories = [] } = useCategoriesQuery();
-  const createCategoryMutation = useCreateCategoryMutation();
+  const { data: categories = [], isLoading } = useCategoriesQuery();
+  const updateCategoryMutation = useUpdateCategoryMutation();
+
+  const category = useMemo(
+    () => categories.find((c) => toParamSlug(c.name) === slug),
+    [categories, slug]
+  );
+
+  useAppPageTitle(isLoading ? "Category" : !category ? "Category Not Found" : category.name);
+
   const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
+  const [catSlug, setCatSlug] = useState("");
   const [description, setDescription] = useState("");
-  const [parentCategory, setParentCategory] = useState("");
+  const [parentCategory, setParentCategory] = useState("none");
   const [isActive, setIsActive] = useState(true);
   const [showInNav, setShowInNav] = useState(true);
   const [subcategoryInput, setSubcategoryInput] = useState("");
   const [subcategories, setSubcategories] = useState<string[]>([]);
-  const [metaTitle, setMetaTitle] = useState("");
-  const [metaDescription, setMetaDescription] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!category) return;
+    setName(category.name);
+    setCatSlug(toParamSlug(category.name));
+    setSubcategories([...category.subcategories]);
+  }, [category]);
+
+  const parentOptions = useMemo(
+    () => categories.filter((c) => c.id !== category?.id).map((c) => c.name),
+    [categories, category?.id]
+  );
+
+  const uuid = category ? `cat-${category.id}-a1b2-c3d4-e5f6` : "";
 
   const handleNameChange = (value: string) => {
     setName(value);
-    setSlug(value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""));
+    setCatSlug(toParamSlug(value));
   };
 
   const addSubcategory = () => {
@@ -44,45 +67,77 @@ export default function AddCategory() {
     }
   };
 
-  const removeSubcategory = (sub: string) => {
-    setSubcategories(subcategories.filter((s) => s !== sub));
+  const removeSubcategory = (sub: string) => setSubcategories(subcategories.filter((s) => s !== sub));
+
+  const copyUuid = () => {
+    navigator.clipboard.writeText(uuid);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleSave = async () => {
-    if (!name) {
-      toast({
-        title: "Missing fields",
-        description: "Please provide a category name.",
-        variant: "destructive",
-      });
+    if (!category || !name.trim()) {
+      toast({ title: "Missing fields", description: "Please provide a category name.", variant: "destructive" });
       return;
     }
-    await createCategoryMutation.mutateAsync({
-      name,
-      products: 0,
-      subcategories,
-    });
-    toast({
-      title: "Category created",
-      description: `"${name}" has been added successfully.`,
-    });
-    navigate("/categories");
+    try {
+      await updateCategoryMutation.mutateAsync({
+        id: category.id,
+        data: { name: name.trim(), subcategories },
+      });
+      toast({ title: "Category updated", description: `"${name.trim()}" has been saved.` });
+      const nextSlug = toParamSlug(name.trim());
+      if (nextSlug !== slug) {
+        navigate(`/categories/${nextSlug}`, { replace: true });
+      } else {
+        navigate("/categories");
+      }
+    } catch {
+      toast({ title: "Save failed", description: "Could not update category.", variant: "destructive" });
+    }
   };
+
+  if (isLoading) {
+    return <AppLoader message="Loading category…" />;
+  }
+
+  if (!category) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <p className="text-muted-foreground">This category could not be found.</p>
+        <Button variant="outline" onClick={() => navigate("/categories")}>
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Categories
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/categories")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h2 className="text-lg font-semibold">Create New Category</h2>
-            <p className="text-sm text-muted-foreground">Organize your products into logical groups</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/categories")}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center">
+                <FolderTree className="h-5 w-5 text-accent-foreground" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">{category.name}</h2>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Package className="h-3 w-3" />
+                  <span>{category.products} products</span>
+                </div>
+              </div>
+            </div>
           </div>
+          <Button onClick={handleSave} disabled={updateCategoryMutation.isPending}>
+            {updateCategoryMutation.isPending ? "Saving…" : "Save Changes"}
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main form */}
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader className="pb-4">
@@ -92,33 +147,16 @@ export default function AddCategory() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="cat-name">Category Name *</Label>
-                    <Input
-                      id="cat-name"
-                      placeholder="e.g. Headphones, Monitors"
-                      value={name}
-                      onChange={(e) => handleNameChange(e.target.value)}
-                    />
+                    <Input id="cat-name" value={name} onChange={(e) => handleNameChange(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cat-slug">Slug</Label>
-                    <Input
-                      id="cat-slug"
-                      placeholder="auto-generated-slug"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      className="text-muted-foreground"
-                    />
+                    <Input id="cat-slug" value={catSlug} onChange={(e) => setCatSlug(e.target.value)} className="text-muted-foreground" readOnly />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cat-desc">Description</Label>
-                  <Textarea
-                    id="cat-desc"
-                    placeholder="Describe this category..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={3}
-                  />
+                  <Textarea id="cat-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
                 </div>
                 <div className="space-y-2">
                   <Label>Parent Category</Label>
@@ -128,8 +166,10 @@ export default function AddCategory() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">None (top-level)</SelectItem>
-                      {categories.map((p) => (
-                        <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
+                      {parentOptions.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -137,13 +177,11 @@ export default function AddCategory() {
               </CardContent>
             </Card>
 
-            {/* Subcategories */}
             <Card>
               <CardHeader className="pb-4">
                 <CardTitle className="text-base">Subcategories</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">Add subcategories to further organize products within this category.</p>
                 <div className="flex gap-2">
                   <Input
                     placeholder="Add a subcategory..."
@@ -161,6 +199,7 @@ export default function AddCategory() {
                       <Badge key={sub} variant="secondary" className="gap-1 pr-1">
                         {sub}
                         <button
+                          type="button"
                           onClick={() => removeSubcategory(sub)}
                           className="ml-1 rounded-full p-0.5 hover:bg-muted transition-colors"
                         >
@@ -175,7 +214,6 @@ export default function AddCategory() {
               </CardContent>
             </Card>
 
-            {/* Category Image */}
             <Card>
               <CardHeader className="pb-4">
                 <CardTitle className="text-base">Category Image</CardTitle>
@@ -188,39 +226,8 @@ export default function AddCategory() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* SEO */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base">SEO</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="meta-title">Meta Title</Label>
-                  <Input
-                    id="meta-title"
-                    placeholder="SEO-friendly title"
-                    value={metaTitle}
-                    onChange={(e) => setMetaTitle(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">{metaTitle.length}/60 characters</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="meta-desc">Meta Description</Label>
-                  <Textarea
-                    id="meta-desc"
-                    placeholder="Brief description for search engines..."
-                    value={metaDescription}
-                    onChange={(e) => setMetaDescription(e.target.value)}
-                    rows={2}
-                  />
-                  <p className="text-xs text-muted-foreground">{metaDescription.length}/160 characters</p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
             <Card>
               <CardHeader className="pb-4">
@@ -246,44 +253,28 @@ export default function AddCategory() {
 
             <Card>
               <CardHeader className="pb-4">
-                <CardTitle className="text-base">Preview</CardTitle>
+                <CardTitle className="text-base">Activity</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center">
-                      <FolderTree className="h-5 w-5 text-accent-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{name || "Category Name"}</p>
-                      {parentCategory && parentCategory !== "none" && (
-                        <p className="text-xs text-muted-foreground">under {parentCategory}</p>
-                      )}
-                    </div>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Category UUID</Label>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate">{uuid}</code>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={copyUuid}>
+                      {copied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+                    </Button>
                   </div>
-                  {subcategories.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {subcategories.map((s) => (
-                        <Badge key={s} variant="secondary" className="text-[10px] font-normal">{s}</Badge>
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex gap-1.5">
-                    {isActive && <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">Active</Badge>}
-                    {showInNav && <Badge variant="outline" className="text-[10px]">In Nav</Badge>}
-                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Products</Label>
+                  <p className="text-sm">{category.products} products assigned</p>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="flex flex-col gap-2">
-              <Button onClick={handleSave} className="w-full">
-                Create New Category
-              </Button>
-              <Button variant="outline" onClick={() => navigate("/categories")} className="w-full">
-                Cancel
-              </Button>
-            </div>
+            <Button variant="outline" onClick={() => navigate("/categories")} className="w-full">
+              Cancel
+            </Button>
           </div>
         </div>
       </motion.div>

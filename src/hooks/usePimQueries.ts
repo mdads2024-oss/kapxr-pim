@@ -4,6 +4,7 @@ import { queryKeys } from "@/services/queryKeys";
 import type {
   Asset,
   Attribute,
+  Brand,
   Category,
   ImportExportHistoryItem,
   Integration,
@@ -21,6 +22,19 @@ export const useCategoriesQuery = () =>
   useQuery({
     queryKey: queryKeys.categories(),
     queryFn: () => pimService.getCategories(),
+  });
+
+export const useBrandsQuery = () =>
+  useQuery({
+    queryKey: queryKeys.brands(),
+    queryFn: () => pimService.getBrands(),
+  });
+
+export const useBrandQuery = (id: number) =>
+  useQuery({
+    queryKey: [...queryKeys.brands(), id] as const,
+    queryFn: () => pimService.getBrandById(id),
+    enabled: Number.isFinite(id),
   });
 
 export const useProductQuery = (id: number) =>
@@ -65,6 +79,38 @@ export const useTeamMembersQuery = () =>
     queryKey: queryKeys.teamMembers(),
     queryFn: () => pimService.getTeamMembers(),
   });
+
+export const useCreateBrandMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Omit<Brand, "id">) => pimService.createBrand(payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.brands() });
+    },
+  });
+};
+
+export const useUpdateBrandMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { id: number; data: Partial<Omit<Brand, "id">> }) =>
+      pimService.updateBrand(payload.id, payload.data),
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.brands() });
+      await queryClient.invalidateQueries({ queryKey: [...queryKeys.brands(), variables.id] });
+    },
+  });
+};
+
+export const useDeleteBrandMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => pimService.deleteBrand(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.brands() });
+    },
+  });
+};
 
 export const useCreateCategoryMutation = () => {
   const queryClient = useQueryClient();

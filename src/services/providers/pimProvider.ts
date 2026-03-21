@@ -2,6 +2,7 @@ import type {
   AnalyticsMetric,
   Asset,
   Attribute,
+  Brand,
   Category,
   ImportExportHistoryItem,
   Integration,
@@ -15,6 +16,12 @@ export interface PIMProvider {
   createProduct(data: Omit<Product, "id">): Promise<Product>;
   updateProduct(id: number, data: Partial<Omit<Product, "id">>): Promise<Product | null>;
   deleteProduct(id: number): Promise<boolean>;
+
+  getBrands(): Promise<Brand[]>;
+  getBrandById(id: number): Promise<Brand | null>;
+  createBrand(data: Omit<Brand, "id">): Promise<Brand>;
+  updateBrand(id: number, data: Partial<Omit<Brand, "id">>): Promise<Brand | null>;
+  deleteBrand(id: number): Promise<boolean>;
 
   getCategories(): Promise<Category[]>;
   createCategory(data: Omit<Category, "id">): Promise<Category>;

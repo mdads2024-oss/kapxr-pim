@@ -28,6 +28,26 @@ export const pimService = {
     return activeProvider.deleteProduct(id);
   },
 
+  async getBrands() {
+    return activeProvider.getBrands();
+  },
+
+  async getBrandById(id: number) {
+    return activeProvider.getBrandById(id);
+  },
+
+  async createBrand(data: Parameters<PIMProvider["createBrand"]>[0]) {
+    return activeProvider.createBrand(data);
+  },
+
+  async updateBrand(id: number, data: Parameters<PIMProvider["updateBrand"]>[1]) {
+    return activeProvider.updateBrand(id, data);
+  },
+
+  async deleteBrand(id: number) {
+    return activeProvider.deleteBrand(id);
+  },
+
   async getCategories() {
     return activeProvider.getCategories();
   },

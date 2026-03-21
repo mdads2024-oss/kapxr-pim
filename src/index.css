@@ -36,14 +36,14 @@
 
     --radius: 0.625rem;
 
-    --sidebar-background: 222 92% 94%;
-    --sidebar-foreground: 224 46% 24%;
-    --sidebar-primary: 222 100% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 88% 86%;
-    --sidebar-accent-foreground: 224 55% 22%;
-    --sidebar-border: 222 70% 84%;
-    --sidebar-ring: 222 100% 50%;
+    --sidebar-background: 222 100% 50%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 222 100% 50%;
+    --sidebar-accent: 222 100% 58%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 222 100% 58%;
+    --sidebar-ring: 0 0% 100%;
 
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
@@ -126,58 +126,37 @@
     animation: brandGradientShift 8s ease infinite;
   }
 
-  .landing-btn-motion {
-    position: relative;
-    overflow: hidden;
-    transition: transform 220ms ease, box-shadow 220ms ease, filter 220ms ease;
-    will-change: transform;
+  /* Sidebar: hide scrollbar, keep scroll (wheel / trackpad / touch) */
+  [data-sidebar="content"] {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* legacy Edge */
   }
 
-  .landing-btn-motion:hover {
-    transform: translateY(-1px) scale(1.015);
-    box-shadow: 0 14px 26px -18px hsl(var(--primary) / 0.7);
-    filter: saturate(1.06);
+  [data-sidebar="content"]::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
 
-  .landing-btn-motion:active {
-    transform: translateY(0) scale(0.995);
+  /**
+   * PIM list / table typography — matches dashboard “Recent Activity” density:
+   * text-xs leading-relaxed primary line, text-[10px] muted meta.
+   */
+  .pim-data-table {
+    @apply w-full text-xs leading-relaxed;
   }
 
-  .landing-btn-motion::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(110deg, transparent 10%, rgba(255, 255, 255, 0.26) 45%, transparent 75%);
-    transform: translateX(-130%);
-    transition: transform 420ms ease;
+  .pim-table-th {
+    @apply p-3 text-left font-semibold text-[10px] uppercase tracking-wide text-muted-foreground/90;
   }
 
-  .landing-btn-motion:hover::after {
-    transform: translateX(130%);
+  .pim-list-icon {
+    @apply h-8 w-8 rounded-lg flex items-center justify-center shrink-0;
   }
 
-  @keyframes landingGradientShift {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
+  .pim-list-meta {
+    @apply text-[10px] text-muted-foreground/70 mt-0.5;
   }
 
-  .landing-animated-bg {
-    background: linear-gradient(130deg, rgba(47, 107, 255, 0.14), rgba(122, 77, 255, 0.16), rgba(25, 184, 255, 0.12), rgba(93, 61, 255, 0.14));
-    background-size: 220% 220%;
-    animation: landingGradientShift 14s ease infinite;
+  .pim-card-shell {
+    @apply border-border/50;
   }
-
-  .landing-gradient-surface {
-    background: linear-gradient(145deg, rgba(86, 97, 255, 0.08), rgba(114, 69, 255, 0.1), rgba(0, 188, 255, 0.08));
-    border: 1px solid rgba(123, 131, 255, 0.24);
-  }
-
 }
