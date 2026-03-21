@@ -50,6 +50,25 @@ So the **GitHub repo name** must stay in sync with that path. If you rename the 
 - the repo name (simplest), or  
 - edit `.github/workflows/deploy-github-pages.yml` and set `VITE_BASE_PATH` manually.
 
+## Deploy job fails (build ✓, deploy ✗)
+
+Almost always **Pages is not using GitHub Actions** yet.
+
+1. Open: `https://github.com/<you>/<repo>/settings/pages`
+2. Under **Build and deployment** → **Source**, choose **GitHub Actions** (not “Deploy from a branch”).
+3. Save, then re-run the workflow: **Actions** → **Deploy to GitHub Pages** → **Run workflow**.
+
+See the exact error:
+
+```bash
+gh run list --workflow=deploy-github-pages.yml -L 1
+gh run view <RUN_ID> --log-failed
+```
+
+**Environment approval:** If **Settings → Environments → `github-pages`** has “Required reviewers”, approve the waiting deployment or remove that rule for a personal project.
+
+---
+
 ## Local preview of a GitHub Pages build
 
 ```bash
