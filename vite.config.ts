@@ -3,8 +3,12 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+// GitHub Pages project site: set VITE_BASE_PATH=/<repo-name>/ when building (see .github/workflows)
+const base = process.env.VITE_BASE_PATH ?? "/";
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base,
   server: {
     host: "::",
     port: 8080,

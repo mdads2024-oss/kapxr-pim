@@ -36,6 +36,9 @@ import { AuthenticatedLayout } from "./components/AppLayout";
 
 const queryClient = new QueryClient();
 
+/** Support GitHub Pages project URLs (`/<repo>/`) via Vite `base` → `import.meta.env.BASE_URL` */
+const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, "") || undefined;
+
 function RequireAuth() {
   if (!isAuthenticated()) return <Navigate to="/signin" replace />;
   return <Outlet />;
@@ -51,7 +54,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename={routerBasename}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Navigate to="/signin" replace />} />
