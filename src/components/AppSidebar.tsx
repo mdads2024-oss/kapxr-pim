@@ -23,6 +23,8 @@ import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import kapxrLogo from "@/assets/kapxr-logo.png";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/services/api/client";
 
 import {
   Sidebar,
@@ -74,11 +76,15 @@ const manageItems = [
 
 const settingsItems = [
   { title: "Help & Support", url: "/help", icon: HelpCircle },
-  { title: "Admin", url: "/admin", icon: Shield },
   { title: "Billing", url: "/billing", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Sign Out", url: "/logout", icon: LogOut },
 ];
+
+type AdminMe = {
+  email: string | null;
+  isAdmin: boolean;
+};
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -93,6 +99,10 @@ export function AppSidebar() {
     } catch {
       return defaultGroupState;
     }
+  });
+  const { data: adminMe } = useQuery({
+    queryKey: ["admin-me"],
+    queryFn: () => apiClient.get<AdminMe>("/admin/me"),
   });
 
   useEffect(() => {
@@ -122,7 +132,7 @@ export function AppSidebar() {
   const renderGroup = (
     groupKey: GroupKey,
     label: string,
-    items: typeof mainItems | typeof setupItems | typeof manageItems | typeof settingsItems
+    items: Array<{ title: string; url: string; icon: typeof LayoutDashboard }>
   ) => (
     <SidebarGroup>
       {!collapsed && label ? (
@@ -185,7 +195,11 @@ export function AppSidebar() {
         {renderGroup("manage", "Manage", manageItems)}
       </SidebarContent>
       <SidebarFooter>
-        {renderGroup("settings", "More", settingsItems)}
+        {renderGroup("settings", "More", [
+          ...settingsItems.slice(0, 1),
+          ...(adminMe?.isAdmin ? [{ title: "Admin", url: "/admin", icon: Shield }] : []),
+          ...settingsItems.slice(1),
+        ])}
       </SidebarFooter>
     </Sidebar>
   );
