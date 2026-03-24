@@ -10,50 +10,12 @@ import { Search, BookOpen, Video, TicketCheck, MessageCircleQuestion, ExternalLi
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/services/api/client";
+import { AppLoader } from "@/components/shared/AppLoader";
 
-const faqs = [
-  {
-    question: "How do I create a new product?",
-    answer: "Navigate to Products → click 'Add Product'. Fill in the required fields like Product Name, SKU, and Short Description, then attach media and set attributes before saving.",
-  },
-  {
-    question: "How do I bulk import products?",
-    answer: "Go to Import / Export → select 'Import'. Upload a CSV or Excel file matching the required template format. You can download a sample template from the same page.",
-  },
-  {
-    question: "How do I assign a brand to a product?",
-    answer: "First create the brand under Setup → Brands. Then when creating or editing a product, select the brand from the Brand field in the Organization sidebar.",
-  },
-  {
-    question: "What are attributes and how do I use them?",
-    answer: "Attributes are custom properties (e.g. Color, Material, Battery Life) that describe your products. Create them under Setup → Attributes, then assign values when editing individual products.",
-  },
-  {
-    question: "How do I manage digital assets?",
-    answer: "Use the Assets page to upload and organize images, videos, and documents. You can then link these assets to products from the product's Media tab.",
-  },
-  {
-    question: "Can I export my product data?",
-    answer: "Yes. Go to Import / Export → Export. Choose the format (CSV or Excel), select which fields to include, and download your data.",
-  },
-  {
-    question: "How do workflows work?",
-    answer: "Workflows guide you through end-to-end processes like product creation. Each workflow shows sequential steps — from brand setup to final product publishing — so nothing is missed.",
-  },
-  {
-    question: "How do I invite team members?",
-    answer: "Go to Team → click 'Invite Member'. Enter their email and assign a role. They'll receive an invitation to join your workspace.",
-  },
-];
-
-const tutorials = [
-  { title: "Getting Started with KapxrPIM", duration: "5 min read", type: "Guide" },
-  { title: "Creating Your First Product", duration: "3 min read", type: "Guide" },
-  { title: "Bulk Import & Export", duration: "4 min read", type: "Guide" },
-  { title: "Managing Digital Assets", duration: "6 min video", type: "Video" },
-  { title: "Setting Up Categories & Attributes", duration: "4 min read", type: "Guide" },
-  { title: "Using Workflows Effectively", duration: "5 min video", type: "Video" },
-];
+type HelpFaq = { id: number; question: string; answer: string };
+type HelpTutorial = { id: number; title: string; duration: string; type: string };
 
 export default function Help() {
   useAppPageTitle("Help & Support");
@@ -62,6 +24,15 @@ export default function Help() {
   const [ticketSubject, setTicketSubject] = useState("");
   const [ticketDescription, setTicketDescription] = useState("");
   const [ticketPriority, setTicketPriority] = useState("Medium");
+  const { data: faqs = [], isLoading: faqsLoading } = useQuery({
+    queryKey: ["help-faqs"],
+    queryFn: () => apiClient.get<HelpFaq[]>("/help/faqs"),
+  });
+  const { data: tutorials = [], isLoading: tutorialsLoading } = useQuery({
+    queryKey: ["help-tutorials"],
+    queryFn: () => apiClient.get<HelpTutorial[]>("/help/tutorials"),
+  });
+  if (faqsLoading || tutorialsLoading) return <AppLoader message="Loading help center…" />;
 
   const filteredFaqs = faqs.filter(
     (f) =>
@@ -69,11 +40,16 @@ export default function Help() {
       f.answer.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSubmitTicket = () => {
+  const handleSubmitTicket = async () => {
     if (!ticketSubject.trim()) {
       toast({ title: "Missing subject", description: "Please provide a subject for your ticket.", variant: "destructive" });
       return;
     }
+    await apiClient.post("/support/tickets", {
+      subject: ticketSubject.trim(),
+      description: ticketDescription.trim(),
+      priority: ticketPriority,
+    });
     toast({ title: "Ticket submitted", description: "We'll get back to you within 24 hours." });
     setTicketSubject("");
     setTicketDescription("");

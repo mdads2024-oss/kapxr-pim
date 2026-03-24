@@ -9,7 +9,9 @@ import { PayPalCheckoutSection } from "@/components/checkout/PayPalCheckoutSecti
 import { useCallback, useState } from "react";
 import {
   useBillingPlansQuery,
+  useBillingInvoicesQuery,
   useBillingSubscriptionQuery,
+  useBillingUsageQuery,
   useChangePlanMutation,
   useStartCheckoutMutation,
 } from "@/hooks/useBillingQueries";
@@ -27,7 +29,9 @@ export default function BillingPage() {
   const [paymentCompany, setPaymentCompany] = useState("Kapxr Technologies");
   const { data: plans = [], isLoading: plansLoading } = useBillingPlansQuery();
   const { data: subscription, isLoading: subscriptionLoading } = useBillingSubscriptionQuery();
-  const isLoading = plansLoading || subscriptionLoading;
+  const { data: usage, isLoading: usageLoading } = useBillingUsageQuery();
+  const { data: invoices = [], isLoading: invoicesLoading } = useBillingInvoicesQuery();
+  const isLoading = plansLoading || subscriptionLoading || usageLoading || invoicesLoading;
   const startCheckoutMutation = useStartCheckoutMutation();
   const changePlanMutation = useChangePlanMutation();
 
@@ -52,12 +56,6 @@ export default function BillingPage() {
   if (isLoading) {
     return <AppLoader message="Loading billing…" />;
   }
-
-  const usage = {
-    storageUsedGb: 312,
-    seatsUsed: 18,
-    connectorsUsed: 5,
-  };
 
   const handleActivateSelectedPlan = async () => {
     if (!selectedPlan) return;
@@ -197,23 +195,23 @@ export default function BillingPage() {
                   <div>
                     <div className="mb-1 flex items-center justify-between text-[11px]">
                       <span className="text-muted-foreground">Storage</span>
-                      <span>{usage.storageUsedGb}GB / {activePlan?.storageLimitGb ?? 0}GB</span>
+                      <span>{usage?.storageUsedGb ?? 0}GB / {activePlan?.storageLimitGb ?? 0}GB</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-muted">
                       <div
                         className="h-1.5 rounded-full bg-primary"
-                        style={{ width: `${Math.min((usage.storageUsedGb / Math.max(activePlan?.storageLimitGb ?? 1, 1)) * 100, 100)}%` }}
+                        style={{ width: `${Math.min((((usage?.storageUsedGb ?? 0) / Math.max(activePlan?.storageLimitGb ?? 1, 1)) * 100), 100)}%` }}
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-[11px]">
                     <div className="rounded-md border border-border/60 bg-card p-2">
                       <p className="text-muted-foreground">Seats</p>
-                      <p className="font-semibold">{usage.seatsUsed} / {activePlan?.seatsIncluded ?? 0}</p>
+                      <p className="font-semibold">{usage?.seatsUsed ?? 0} / {activePlan?.seatsIncluded ?? 0}</p>
                     </div>
                     <div className="rounded-md border border-border/60 bg-card p-2">
                       <p className="text-muted-foreground">Connectors</p>
-                      <p className="font-semibold">{usage.connectorsUsed} / {activePlan?.connectorsIncluded ?? 0}</p>
+                      <p className="font-semibold">{usage?.connectorsUsed ?? 0} / {activePlan?.connectorsIncluded ?? 0}</p>
                     </div>
                   </div>
                 </div>
@@ -223,10 +221,12 @@ export default function BillingPage() {
             <div className="rounded-lg border border-border/70 bg-background/70 p-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Recent Transactions</p>
               <div className="mt-2 space-y-2">
-                {[
-                  { id: "INV-3007", amount: "$129.00", status: "Paid", date: "Mar 01, 2026" },
-                  { id: "INV-2974", amount: "$129.00", status: "Paid", date: "Feb 01, 2026" },
-                ].map((invoice) => (
+                {invoices.length === 0 && (
+                  <div className="rounded-md border border-dashed border-border/60 px-2.5 py-4 text-center text-xs text-muted-foreground">
+                    No invoices yet.
+                  </div>
+                )}
+                {invoices.map((invoice) => (
                   <div key={invoice.id} className="flex items-center justify-between rounded-md border border-border/60 bg-card px-2.5 py-2">
                     <div>
                       <p className="text-xs font-medium">{invoice.id}</p>

@@ -77,6 +77,13 @@ export default function Integrations() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {integrations.length === 0 && (
+            <Card className="md:col-span-2 lg:col-span-3">
+              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                No integrations found. Connect your first integration to start syncing data.
+              </CardContent>
+            </Card>
+          )}
           {integrations.map((item) => (
             <Card key={item.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">

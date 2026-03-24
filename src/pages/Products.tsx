@@ -148,6 +148,13 @@ export default function Products() {
                   </tr>
                 </thead>
                 <tbody>
+                  {paginatedProducts.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-3 py-10 text-center text-sm text-muted-foreground">
+                        No products found. Create your first product to get started.
+                      </td>
+                    </tr>
+                  )}
                   {paginatedProducts.map((p) => (
                     <tr key={p.id} className="border-b last:border-0 border-border/50 hover:bg-accent/30 transition-colors cursor-pointer" onClick={() => navigate(`/products/${p.id}`)}>
                       <td className="p-3">

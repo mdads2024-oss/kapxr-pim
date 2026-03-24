@@ -23,6 +23,8 @@ import Landing from "./pages/Landing";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import SignOut from "./pages/SignOut";
+import VerifyEmail from "./pages/VerifyEmail";
+import ForgotPassword from "./pages/ForgotPassword";
 import Workflow from "./pages/Workflow";
 import ActivityPage from "./pages/Activity";
 import CategoryDetail from "./pages/CategoryDetail";
@@ -31,6 +33,7 @@ import Brands from "./pages/Brands";
 import AddBrand from "./pages/AddBrand";
 import BrandDetail from "./pages/BrandDetail";
 import Help from "./pages/Help";
+import AdminPage from "./pages/Admin";
 import { isAuthenticated } from "./lib/auth";
 import { AuthenticatedLayout } from "./components/AppLayout";
 
@@ -62,6 +65,8 @@ const App = () => (
           <Route element={<PublicOnly />}>
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
           </Route>
 
           <Route element={<RequireAuth />}>
@@ -89,6 +94,7 @@ const App = () => (
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/team" element={<Team />} />
               <Route path="/help" element={<Help />} />
+              <Route path="/admin" element={<AdminPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/billing" element={<BillingPage />} />
             </Route>

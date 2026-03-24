@@ -107,6 +107,13 @@ export default function Categories() {
                   </tr>
                 </thead>
                 <tbody>
+                  {paginatedCategories.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-3 py-10 text-center text-sm text-muted-foreground">
+                        No categories found. Create your first category to get started.
+                      </td>
+                    </tr>
+                  )}
                   {paginatedCategories.map((c) => (
                     <tr
                       key={c.id}

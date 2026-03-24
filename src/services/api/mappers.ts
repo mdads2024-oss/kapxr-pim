@@ -2,6 +2,7 @@ import type {
   AnalyticsMetricDto,
   AssetDto,
   AttributeDto,
+  BrandDto,
   CategoryDto,
   ImportExportHistoryItemDto,
   IntegrationDto,
@@ -12,6 +13,7 @@ import type {
   AnalyticsMetric,
   Asset,
   Attribute,
+  Brand,
   Category,
   ImportExportHistoryItem,
   Integration,
@@ -35,6 +37,23 @@ export const mapCategoryDtoToModel = (dto: CategoryDto): Category => ({
   name: dto.name,
   products: dto.products,
   subcategories: dto.subcategories,
+});
+
+export const mapBrandDtoToModel = (dto: BrandDto): Brand => ({
+  id: dto.id,
+  uuid: dto.uuid,
+  name: dto.name,
+  description: dto.description,
+  website: dto.website,
+  status: dto.status,
+  products: dto.products,
+  logo: dto.logo,
+  contactEmail: dto.contactEmail ?? dto.contact_email ?? "",
+  contactPhone: dto.contactPhone ?? dto.contact_phone ?? "",
+  country: dto.country ?? "",
+  createdAt: dto.createdAt ?? dto.created_at ?? "",
+  updatedAt: dto.updatedAt ?? dto.updated_at ?? "",
+  createdBy: dto.createdBy ?? dto.created_by ?? "system",
 });
 
 export const mapAssetDtoToModel = (dto: AssetDto): Asset => ({

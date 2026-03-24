@@ -15,6 +15,18 @@ export const useBillingSubscriptionQuery = () =>
     queryFn: () => billingService.getWorkspaceSubscription(),
   });
 
+export const useBillingUsageQuery = () =>
+  useQuery({
+    queryKey: [...queryKeys.billingSubscription(), "usage"] as const,
+    queryFn: () => billingService.getUsage(),
+  });
+
+export const useBillingInvoicesQuery = () =>
+  useQuery({
+    queryKey: [...queryKeys.billingSubscription(), "invoices"] as const,
+    queryFn: () => billingService.getInvoices(),
+  });
+
 export const useStartCheckoutMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({

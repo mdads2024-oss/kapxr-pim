@@ -4,7 +4,7 @@ import type { PIMProvider } from "@/services/providers/pimProvider";
 
 export type PIMDataSource = "mock" | "api";
 
-const configuredSource = (import.meta.env.VITE_PIM_DATA_SOURCE ?? "mock") as PIMDataSource;
+const configuredSource = (import.meta.env.VITE_PIM_DATA_SOURCE ?? "api") as PIMDataSource;
 
 export const resolvePimProvider = (): PIMProvider => {
   if (configuredSource === "api") {

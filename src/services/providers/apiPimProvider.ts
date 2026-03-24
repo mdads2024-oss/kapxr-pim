@@ -4,6 +4,7 @@ import type {
   AnalyticsMetricDto,
   AssetDto,
   AttributeDto,
+  BrandDto,
   CategoryDto,
   ImportExportHistoryItemDto,
   IntegrationDto,
@@ -14,6 +15,7 @@ import {
   mapAnalyticsMetricDtoToModel,
   mapAssetDtoToModel,
   mapAttributeDtoToModel,
+  mapBrandDtoToModel,
   mapCategoryDtoToModel,
   mapImportExportHistoryDtoToModel,
   mapIntegrationDtoToModel,
@@ -43,19 +45,24 @@ export const apiPimProvider: PIMProvider = {
     return true;
   },
   async getBrands() {
-    throw new Error("ApiPIMProvider.getBrands is not implemented yet.");
+    const response = await apiClient.get<BrandDto[]>("/brands");
+    return response.map(mapBrandDtoToModel);
   },
-  async getBrandById() {
-    throw new Error("ApiPIMProvider.getBrandById is not implemented yet.");
+  async getBrandById(id) {
+    const response = await apiClient.get<BrandDto>(`/brands/${id}`);
+    return mapBrandDtoToModel(response);
   },
-  async createBrand() {
-    throw new Error("ApiPIMProvider.createBrand is not implemented yet.");
+  async createBrand(data) {
+    const response = await apiClient.post<BrandDto>("/brands", data);
+    return mapBrandDtoToModel(response);
   },
-  async updateBrand() {
-    throw new Error("ApiPIMProvider.updateBrand is not implemented yet.");
+  async updateBrand(id, data) {
+    const response = await apiClient.patch<BrandDto>(`/brands/${id}`, data);
+    return mapBrandDtoToModel(response);
   },
-  async deleteBrand() {
-    throw new Error("ApiPIMProvider.deleteBrand is not implemented yet.");
+  async deleteBrand(id) {
+    await apiClient.delete(`/brands/${id}`);
+    return true;
   },
   async getCategories() {
     const response = await apiClient.get<CategoryDto[]>("/categories");

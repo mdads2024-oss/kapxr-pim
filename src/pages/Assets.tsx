@@ -184,6 +184,14 @@ export default function Assets() {
             </CardContent>
           </Card>
 
+          {paginatedAssets.length === 0 && (
+            <Card className={viewMode === "grid" ? "sm:col-span-2 lg:col-span-2 xl:col-span-3" : ""}>
+              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                No assets found. Upload your first asset to continue.
+              </CardContent>
+            </Card>
+          )}
+
           {paginatedAssets.map((a) => {
             const Icon = typeIcon[a.type];
             return (

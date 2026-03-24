@@ -10,6 +10,7 @@ import {
   Upload,
   Plug,
   CreditCard,
+  Shield,
   LogOut,
   GitBranch,
   Activity,
@@ -73,6 +74,7 @@ const manageItems = [
 
 const settingsItems = [
   { title: "Help & Support", url: "/help", icon: HelpCircle },
+  { title: "Admin", url: "/admin", icon: Shield },
   { title: "Billing", url: "/billing", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Sign Out", url: "/logout", icon: LogOut },

@@ -136,6 +136,13 @@ export default function Brands() {
                   </tr>
                 </thead>
                 <tbody>
+                  {paginatedBrands.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-3 py-10 text-center text-sm text-muted-foreground">
+                        No brands found. Create your first brand to get started.
+                      </td>
+                    </tr>
+                  )}
                   {paginatedBrands.map((b) => (
                     <tr
                       key={b.id}

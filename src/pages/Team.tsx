@@ -145,6 +145,13 @@ export default function Team() {
                   </tr>
                 </thead>
                 <tbody>
+                  {paginatedMembers.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-3 py-10 text-center text-sm text-muted-foreground">
+                        No team members found. Invite your first member to continue.
+                      </td>
+                    </tr>
+                  )}
                   {paginatedMembers.map((m) => (
                     <tr key={m.email} className="border-b last:border-0 border-border/50 hover:bg-accent/30 transition-colors">
                       <td className="p-3">

@@ -25,6 +25,7 @@ import {
 import { motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
 import { useEffect, useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import kapxrLogo from "@/assets/kapxr-logo.png";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -32,36 +33,7 @@ import { notifyError, notifySuccess } from "@/lib/notify";
 import { useBillingPlansQuery } from "@/hooks/useBillingQueries";
 import { setSelectedPlan } from "@/lib/billingSelection";
 import type { BillingInterval } from "@/types/billing";
-
-const features = [
-  {
-    icon: Layers3,
-    title: "Unified Product Hub",
-    description: "Manage products, categories, assets, and attributes from one clean operational workspace.",
-  },
-  {
-    icon: Sparkles,
-    title: "AI Content Workflows",
-    description: "Generate enriched product descriptions and optimize catalog quality with approval-ready flows.",
-  },
-  {
-    icon: Database,
-    title: "Mock-to-API Ready",
-    description: "Frontend-first architecture with provider abstraction for easy backend switch-over.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Enterprise Reliability",
-    description: "Role-aware team workflows, audit-friendly patterns, and consistent state across modules.",
-  },
-];
-
-const services = [
-  "Product Information Management",
-  "Digital Asset Management",
-  "Catalog Enrichment & Data Quality",
-  "Channel Sync & Import/Export Pipelines",
-];
+import { apiClient } from "@/services/api/client";
 
 const aboutArtworkSrc =
   "/@fs/Users/manish/.cursor/projects/Users-manish-Desktop-Manish-Yadav-Root-Qubical-AI-Qubical-projects-kapxrpim-main/assets/Screenshot_2026-03-21_at_2.27.36_AM-b692120b-ed6f-41e0-9ce1-7879cd9f511a.png";
@@ -81,10 +53,49 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.45 } },
 };
 
+type LandingFeature = { icon: string; title: string; description: string };
+type LandingMetric = { k?: string; label?: string; value: string | number; tone?: string; v?: string };
+type LandingContent = {
+  features: LandingFeature[];
+  services: string[];
+  hero_metrics: LandingMetric[];
+  snapshot_stats: LandingMetric[];
+  workbench_metrics: LandingMetric[];
+  about_metrics: LandingMetric[];
+  about_stats: LandingMetric[];
+  hero_badge?: string;
+  hero_title?: string;
+  hero_highlight?: string;
+  hero_subtitle?: string;
+  hero_ctas?: Array<{ label: string; to: string; variant?: "default" | "outline" }>;
+  cta_title?: string;
+  cta_subtitle?: string;
+  footer_brand_description?: string;
+  footer_badges?: string[];
+  footer_groups?: Array<{
+    title: string;
+    links: Array<{ label: string; href?: string; to?: string }>;
+  }>;
+  footer_legal_links?: Array<{ label: string; href?: string }>;
+  footer_social_links?: Array<{ label: string; href?: string }>;
+};
+
+const iconMap = {
+  Layers3,
+  Sparkles,
+  Database,
+  ShieldCheck,
+  Workflow,
+} as const;
+
 export default function Landing() {
   const shouldReduceMotion = useReducedMotion();
   const { toast } = useToast();
   const { data: plans = [] } = useBillingPlansQuery();
+  const { data: landingContent } = useQuery({
+    queryKey: ["landing-content"],
+    queryFn: () => apiClient.get<LandingContent | null>("/landing/content"),
+  });
   const [activeSection, setActiveSection] = useState<"features" | "services" | "about" | "pricing" | "cta">("features");
   const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -131,19 +142,6 @@ export default function Landing() {
     pagePointerY.set(window.innerHeight / 3);
   };
 
-  const NEWSLETTER_STORAGE_KEY = "kapxr:newsletter-subscribers";
-
-  const getStoredSubscribers = (): string[] => {
-    const raw = window.localStorage.getItem(NEWSLETTER_STORAGE_KEY);
-    if (!raw) return [];
-    try {
-      const parsed = JSON.parse(raw) as string[];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  };
-
   const handleNewsletterSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const email = newsletterEmail.trim().toLowerCase();
@@ -159,23 +157,18 @@ export default function Landing() {
       return;
     }
 
-    const existingSubscribers = getStoredSubscribers();
-    if (existingSubscribers.includes(email)) {
-      notifyError(toast, "Already subscribed", "This email is already on our update list.");
-      return;
-    }
-
     try {
       setIsSubmittingNewsletter(true);
-      await new Promise((resolve) => setTimeout(resolve, 700));
-      window.localStorage.setItem(
-        NEWSLETTER_STORAGE_KEY,
-        JSON.stringify([...existingSubscribers, email])
-      );
+      await apiClient.post<{ id: number; email: string }>("/newsletter/subscribe", { email });
       notifySuccess(toast, "Subscribed successfully", "You will receive our monthly product updates.");
       setNewsletterEmail("");
-    } catch {
-      notifyError(toast, "Subscription failed", "Please try again in a moment.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Please try again in a moment.";
+      if (message.toLowerCase().includes("already")) {
+        notifyError(toast, "Already subscribed", "This email is already on our update list.");
+      } else {
+        notifyError(toast, "Subscription failed", message);
+      }
     } finally {
       setIsSubmittingNewsletter(false);
     }
@@ -221,6 +214,31 @@ export default function Landing() {
 
   const buildSignupLink = (planCode: "starter" | "growth" | "pro") =>
     `/signup?plan=${planCode}&interval=${billingInterval}`;
+
+  const features = landingContent?.features ?? [];
+  const services = landingContent?.services ?? [];
+  const heroMetrics = landingContent?.hero_metrics ?? [];
+  const snapshotStats = landingContent?.snapshot_stats ?? [];
+  const workbenchMetrics = landingContent?.workbench_metrics ?? [];
+  const aboutMetrics = landingContent?.about_metrics ?? [];
+  const aboutStats = landingContent?.about_stats ?? [];
+  const heroBadge = landingContent?.hero_badge ?? "Built for Modern Commerce Teams";
+  const heroTitle = landingContent?.hero_title ?? "The Product Experience Platform for High-Scale Catalogs";
+  const heroHighlight = landingContent?.hero_highlight ?? "High-Scale Catalogs";
+  const heroSubtitle =
+    landingContent?.hero_subtitle ??
+    "KapxrPIM helps teams centralize product data, streamline content operations, and publish faster across channels with confidence.";
+  const heroCtas = landingContent?.hero_ctas ?? [];
+  const ctaTitle = landingContent?.cta_title ?? "Ready to transform your product operations?";
+  const ctaSubtitle =
+    landingContent?.cta_subtitle ?? "Start your KapxrPIM workspace and onboard your team in minutes.";
+  const footerBrandDescription =
+    landingContent?.footer_brand_description ??
+    "The modern product operations platform for catalog-rich businesses. Centralize data, accelerate enrichment, and publish confidently across channels.";
+  const footerBadges = landingContent?.footer_badges ?? [];
+  const footerGroups = landingContent?.footer_groups ?? [];
+  const footerLegalLinks = landingContent?.footer_legal_links ?? [];
+  const footerSocialLinks = landingContent?.footer_social_links ?? [];
 
   return (
     <div
@@ -346,29 +364,30 @@ export default function Landing() {
           animate="show"
         >
           <motion.div variants={item} className="space-y-5" style={{ y: heroLeftParallax }}>
-            <Badge variant="secondary" className="text-xs w-fit">Built for Modern Commerce Teams</Badge>
+            <Badge variant="secondary" className="text-xs w-fit">{heroBadge}</Badge>
             <h1 className="text-3xl font-semibold leading-tight tracking-tight md:text-5xl">
-              The Product Experience Platform for{" "}
-              <span className="text-primary">High-Scale Catalogs</span>
+              {heroTitle.replace(heroHighlight, "")}
+              <span className="text-primary">{heroHighlight}</span>
             </h1>
             <p className="max-w-xl text-sm text-muted-foreground md:text-base">
-              KapxrPIM helps teams centralize product data, streamline content operations, and publish faster across channels with confidence.
+              {heroSubtitle}
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="gap-2">
-                <Link to="/signup">
-                  Start Free Trial <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/signin">Already have an account?</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="gap-2">
-                <Link to="/signin">
-                  <CirclePlay className="h-4 w-4" />
-                  Watch walkthrough
-                </Link>
-              </Button>
+              {heroCtas.map((cta) => (
+                <Button
+                  key={`${cta.label}-${cta.to}`}
+                  asChild
+                  size="lg"
+                  variant={cta.variant === "outline" ? "outline" : "default"}
+                  className={cta.label.toLowerCase().includes("watch") ? "gap-2" : undefined}
+                >
+                  <Link to={cta.to}>
+                    {cta.label}
+                    {cta.label.toLowerCase().includes("start") && <ArrowRight className="h-4 w-4" />}
+                    {cta.label.toLowerCase().includes("watch") && <CirclePlay className="h-4 w-4" />}
+                  </Link>
+                </Button>
+              ))}
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /> Fast onboarding</span>
@@ -376,14 +395,10 @@ export default function Landing() {
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /> API-ready architecture</span>
             </div>
             <div className="grid max-w-xl grid-cols-3 gap-2 pt-2">
-              {[
-                { k: "Catalog records", v: "1.2M+" },
-                { k: "Time saved", v: "38%" },
-                { k: "NPS uplift", v: "+24" },
-              ].map((metric) => (
-                <div key={metric.k} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
-                  <p className="text-sm font-semibold">{metric.v}</p>
-                  <p className="text-[11px] text-muted-foreground">{metric.k}</p>
+              {heroMetrics.map((metric) => (
+                <div key={String(metric.k ?? metric.label)} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
+                  <p className="text-sm font-semibold">{String(metric.v ?? metric.value)}</p>
+                  <p className="text-[11px] text-muted-foreground">{String(metric.k ?? metric.label ?? "")}</p>
                 </div>
               ))}
             </div>
@@ -404,20 +419,15 @@ export default function Landing() {
                 <CardDescription>What teams improve with KapxrPIM in 30 days</CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-3 relative z-10">
-                {[
-                  { label: "Faster Time-to-Publish", value: "2.8x" },
-                  { label: "Catalog Completeness", value: "+34%" },
-                  { label: "Asset Reuse Efficiency", value: "+41%" },
-                  { label: "Manual Error Reduction", value: "-52%" },
-                ].map((item) => (
+                {snapshotStats.map((item) => (
                   <motion.div
-                    key={item.label}
+                    key={String(item.label)}
                     className="rounded-lg border border-border/50 bg-background/75 p-3"
                     whileHover={{ y: -3 }}
                     transition={{ duration: 0.16 }}
                   >
-                    <p className="text-xl font-semibold">{item.value}</p>
-                    <p className="text-xs text-muted-foreground">{item.label}</p>
+                    <p className="text-xl font-semibold">{String(item.value)}</p>
+                    <p className="text-xs text-muted-foreground">{String(item.label)}</p>
                   </motion.div>
                 ))}
               </CardContent>
@@ -443,21 +453,17 @@ export default function Landing() {
               </div>
 
               <div className="space-y-3">
-                {[
-                  { label: "Catalog Completeness", value: 87, tone: "bg-primary" },
-                  { label: "Channel Readiness", value: 92, tone: "bg-success" },
-                  { label: "Asset Coverage", value: 78, tone: "bg-cyan-500" },
-                ].map((row, index) => (
+                {workbenchMetrics.map((row, index) => (
                   <div key={row.label} className="space-y-1.5">
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-muted-foreground">{row.label}</span>
-                      <span className="font-medium">{row.value}%</span>
+                      <span className="font-medium">{Number(row.value)}%</span>
                     </div>
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                       <motion.div
-                        className={`h-full rounded-full ${row.tone}`}
+                        className={`h-full rounded-full ${row.tone ?? "bg-primary"}`}
                         initial={{ width: 0 }}
-                        animate={{ width: `${row.value}%` }}
+                        animate={{ width: `${Number(row.value)}%` }}
                         transition={{ duration: 0.9, delay: 0.15 + index * 0.12 }}
                       />
                     </div>
@@ -524,7 +530,10 @@ export default function Landing() {
                         animate={shouldReduceMotion ? undefined : { y: [0, -2, 0] }}
                         transition={{ duration: 3.5 + index * 0.4, repeat: Infinity, ease: "easeInOut" }}
                       >
-                        <feature.icon className="h-4 w-4" />
+                        {(() => {
+                          const Icon = iconMap[feature.icon as keyof typeof iconMap] ?? Workflow;
+                          return <Icon className="h-4 w-4" />;
+                        })()}
                       </motion.span>
                       {feature.title}
                     </CardTitle>
@@ -606,21 +615,17 @@ export default function Landing() {
                 </div>
 
                 <div className="relative z-10 space-y-3">
-                  {[
-                    { label: "Catalog Health", value: 88 },
-                    { label: "Channel Readiness", value: 93 },
-                    { label: "Enrichment Progress", value: 74 },
-                  ].map((metric, index) => (
+                  {aboutMetrics.map((metric, index) => (
                     <div key={metric.label} className="space-y-1.5">
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="text-muted-foreground">{metric.label}</span>
-                        <span className="font-medium">{metric.value}%</span>
+                        <span className="font-medium">{Number(metric.value)}%</span>
                       </div>
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                         <motion.div
                           className="h-full rounded-full bg-primary"
                           initial={{ width: 0 }}
-                          whileInView={{ width: `${metric.value}%` }}
+                          whileInView={{ width: `${Number(metric.value)}%` }}
                           viewport={{ once: true }}
                           transition={{ duration: 0.7, delay: 0.1 + index * 0.1 }}
                         />
@@ -630,14 +635,12 @@ export default function Landing() {
                 </div>
 
                 <div className="relative z-10 mt-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-lg border border-border/60 bg-card p-2.5">
-                    <p className="text-[10px] text-muted-foreground">Products managed</p>
-                    <p className="text-base font-semibold">126K</p>
-                  </div>
-                  <div className="rounded-lg border border-border/60 bg-card p-2.5">
-                    <p className="text-[10px] text-muted-foreground">Assets linked</p>
-                    <p className="text-base font-semibold">412K</p>
-                  </div>
+                  {aboutStats.map((stat) => (
+                    <div key={String(stat.label)} className="rounded-lg border border-border/60 bg-card p-2.5">
+                      <p className="text-[10px] text-muted-foreground">{String(stat.label)}</p>
+                      <p className="text-base font-semibold">{String(stat.value)}</p>
+                    </div>
+                  ))}
                 </div>
               </motion.div>
             </CardContent>
@@ -786,9 +789,9 @@ export default function Landing() {
               <div>
                 <p className="text-lg font-semibold inline-flex items-center gap-2">
                   <Star className="h-4 w-4 text-primary" />
-                  Ready to transform your product operations?
+                  {ctaTitle}
                 </p>
-                <p className="text-sm text-muted-foreground">Start your KapxrPIM workspace and onboard your team in minutes.</p>
+                <p className="text-sm text-muted-foreground">{ctaSubtitle}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button asChild>
@@ -810,44 +813,30 @@ export default function Landing() {
                 <span className="text-base font-semibold tracking-tight">KapxrPIM</span>
               </div>
               <p className="mt-3 max-w-md text-sm text-muted-foreground">
-                The modern product operations platform for catalog-rich businesses. Centralize data, accelerate enrichment, and publish confidently across channels.
+                {footerBrandDescription}
               </p>
               <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                <Badge variant="secondary">SOC 2 Ready</Badge>
-                <Badge variant="secondary">99.9% Uptime</Badge>
-                <Badge variant="secondary">API-first</Badge>
+                {footerBadges.map((badge) => (
+                  <Badge key={badge} variant="secondary">{badge}</Badge>
+                ))}
               </div>
             </div>
-
-            <div>
-              <p className="text-sm font-semibold">Product</p>
-              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
-                <li><a href="#services" className="hover:text-foreground transition-colors">Services</a></li>
-                <li><Link to="/signin" className="hover:text-foreground transition-colors">Sign in</Link></li>
-                <li><Link to="/signup" className="hover:text-foreground transition-colors">Start free trial</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold">Company</p>
-              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                <li><a href="#about" className="hover:text-foreground transition-colors">About us</a></li>
-                <li><a href="#cta" className="hover:text-foreground transition-colors">Contact sales</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Partners</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold">Resources</p>
-              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">API Reference</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Status</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Security</a></li>
-              </ul>
-            </div>
+            {footerGroups.map((group) => (
+              <div key={group.title}>
+                <p className="text-sm font-semibold">{group.title}</p>
+                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                  {group.links.map((link) => (
+                    <li key={link.label}>
+                      {link.to ? (
+                        <Link to={link.to} className="hover:text-foreground transition-colors">{link.label}</Link>
+                      ) : (
+                        <a href={link.href ?? "#"} className="hover:text-foreground transition-colors">{link.label}</a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
 
           <div className="mx-auto w-full max-w-7xl px-4 pb-8 md:px-6">
@@ -879,21 +868,22 @@ export default function Landing() {
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-4 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between md:px-6">
               <p>© {new Date().getFullYear()} KapxrPIM. All rights reserved.</p>
               <div className="flex items-center gap-4">
-                <a href="#" aria-label="LinkedIn" className="hover:text-foreground transition-colors">
-                  <Linkedin className="h-4 w-4" />
-                </a>
-                <a href="#" aria-label="X" className="hover:text-foreground transition-colors">
-                  <Twitter className="h-4 w-4" />
-                </a>
-                <a href="#" aria-label="YouTube" className="hover:text-foreground transition-colors">
-                  <Youtube className="h-4 w-4" />
-                </a>
-                <a href="#" aria-label="GitHub" className="hover:text-foreground transition-colors">
-                  <Github className="h-4 w-4" />
-                </a>
-                <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-                <a href="#" className="hover:text-foreground transition-colors">Terms</a>
-                <a href="#" className="hover:text-foreground transition-colors">Cookies</a>
+                {footerSocialLinks.map((link) => (
+                  <a key={link.label} href={link.href ?? "#"} aria-label={link.label} className="hover:text-foreground transition-colors">
+                    {link.label === "LinkedIn" ? (
+                      <Linkedin className="h-4 w-4" />
+                    ) : link.label === "X" ? (
+                      <Twitter className="h-4 w-4" />
+                    ) : link.label === "YouTube" ? (
+                      <Youtube className="h-4 w-4" />
+                    ) : (
+                      <Github className="h-4 w-4" />
+                    )}
+                  </a>
+                ))}
+                {footerLegalLinks.map((link) => (
+                  <a key={link.label} href={link.href ?? "#"} className="hover:text-foreground transition-colors">{link.label}</a>
+                ))}
               </div>
             </div>
           </div>

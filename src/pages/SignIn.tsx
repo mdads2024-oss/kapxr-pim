@@ -2,13 +2,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { notifyError, notifySuccess } from "@/lib/notify";
 import { useToast } from "@/hooks/use-toast";
 import { signInSession } from "@/lib/auth";
+import { insforgeClient } from "@/services/insforgeClient";
 import { CheckCircle2, Sparkles, BarChart3, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
-import { setSelectedPlan } from "@/lib/billingSelection";
+import { setSelectedPlan, type SelectedPlan } from "@/lib/billingSelection";
 import type { BillingInterval } from "@/types/billing";
 
 export default function SignIn() {
@@ -17,28 +18,99 @@ export default function SignIn() {
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const selectedPlan = useMemo(() => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+
+  const selectedPlan = useMemo<SelectedPlan | null>(() => {
     const plan = searchParams.get("plan");
     const interval = searchParams.get("interval");
     const isPlanValid = plan === "starter" || plan === "growth" || plan === "pro";
     const isIntervalValid = interval === "monthly" || interval === "yearly";
     if (!isPlanValid || !isIntervalValid) return null;
-    return { planCode: plan, interval: interval as BillingInterval };
+    return { planCode: plan as SelectedPlan["planCode"], interval: interval as BillingInterval };
   }, [searchParams]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    let active = true;
+    const restoreSession = async () => {
+      const authApi = insforgeClient.auth as unknown as {
+        getCurrentSession?: () => Promise<{
+          data?: { session?: { user?: { email?: string; profile?: unknown } } };
+          error?: { message?: string } | null;
+        }>;
+      };
+      if (!authApi.getCurrentSession) return;
+      const { data, error } = await authApi.getCurrentSession();
+      if (!active || error || !data?.session?.user?.email) return;
+      if (selectedPlan) setSelectedPlan(selectedPlan);
+      signInSession({
+        email: data.session.user.email,
+        name: (data.session.user.profile as { name?: string } | undefined)?.name,
+      });
+      navigate(selectedPlan ? "/settings" : "/app");
+    };
+    void restoreSession();
+    return () => {
+      active = false;
+    };
+  }, [navigate, selectedPlan]);
+
+  const buildRedirectUrl = () => {
+    const base = import.meta.env.BASE_URL || "/";
+    const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+    return `${window.location.origin}${normalizedBase}signin`;
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleSubmitting(true);
+      if (selectedPlan) setSelectedPlan(selectedPlan);
+      const { error } = await insforgeClient.auth.signInWithOAuth({
+        provider: "google",
+        redirectTo: buildRedirectUrl(),
+      });
+      if (error) {
+        notifyError(toast, "Google sign-in failed", error.message);
+      }
+    } catch (err) {
+      notifyError(toast, "Google sign-in failed", err instanceof Error ? err.message : "Unexpected error");
+    } finally {
+      setIsGoogleSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!email.trim() || !password.trim()) {
       notifyError(toast, "Missing credentials", "Please enter email and password.");
       return;
     }
 
-    if (selectedPlan) {
-      setSelectedPlan(selectedPlan);
+    try {
+      setIsSubmitting(true);
+      const { data, error } = await insforgeClient.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
+      });
+      if (error || !data?.user?.email) {
+        notifyError(toast, "Sign in failed", error?.message || "Please check your credentials.");
+        return;
+      }
+
+      if (selectedPlan) {
+        setSelectedPlan(selectedPlan);
+      }
+      signInSession({
+        email: data.user.email,
+        name: (data.user.profile as { name?: string } | undefined)?.name,
+      });
+      notifySuccess(toast, "Welcome back", "Signed in successfully.");
+      navigate(selectedPlan ? "/settings" : "/app");
+    } catch (err) {
+      notifyError(toast, "Sign in failed", err instanceof Error ? err.message : "Unexpected error");
+    } finally {
+      setIsSubmitting(false);
     }
-    signInSession({ email: email.trim() });
-    notifySuccess(toast, "Welcome back", "Signed in successfully.");
-    navigate(selectedPlan ? "/settings" : "/app");
   };
 
   return (
@@ -61,8 +133,8 @@ export default function SignIn() {
             </div>
 
             <div className="space-y-4">
-              <Button type="button" variant="outline" className="w-full">
-                Sign in with Google
+              <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleSubmitting}>
+                {isGoogleSubmitting ? "Redirecting..." : "Sign in with Google"}
               </Button>
               <div className="relative py-1">
                 <div className="h-px w-full bg-border" />
@@ -84,11 +156,13 @@ export default function SignIn() {
                     <ShieldCheck className="h-3.5 w-3.5 text-success" />
                     Secure login
                   </span>
-                  <button type="button" className="text-xs text-primary hover:underline">
+                  <Link to="/forgot-password" className="text-xs text-primary hover:underline">
                     Forgot password?
-                  </button>
+                  </Link>
                 </div>
-                <Button type="submit" className="w-full h-10">Sign in</Button>
+                <Button type="submit" className="w-full h-10" disabled={isSubmitting}>
+                  {isSubmitting ? "Signing in..." : "Sign in"}
+                </Button>
                 <p className="text-xs text-muted-foreground text-center">
                   New to KapxrPIM?{" "}
                   <Link to="/signup" className="text-primary hover:underline">

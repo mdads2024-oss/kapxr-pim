@@ -8,6 +8,9 @@ import {
   Search, Filter, Package, Trash2, Upload, Download, Edit, Plus, UserPlus, Image, FolderTree, Tags, Settings, Building2,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/services/api/client";
+import { AppLoader } from "@/components/shared/AppLoader";
 
 const iconMap: Record<string, typeof Package> = {
   create: Plus,
@@ -20,20 +23,15 @@ const iconMap: Record<string, typeof Package> = {
   settings: Settings,
 };
 
-const logs = [
-  { id: 1, user: "Arjun M.", initials: "AM", action: "create", entity: "Product", detail: 'Created product "Wireless Keyboard Pro"', time: "2 min ago" },
-  { id: 2, user: "Priya S.", initials: "PS", action: "export", entity: "Products", detail: "Exported 142 products as CSV", time: "18 min ago" },
-  { id: 3, user: "Arjun M.", initials: "AM", action: "upload", entity: "Asset", detail: "Uploaded 5 images to product gallery", time: "35 min ago" },
-  { id: 4, user: "Rahul K.", initials: "RK", action: "delete", entity: "Product", detail: 'Deleted product "Old Monitor Stand"', time: "1 hour ago" },
-  { id: 5, user: "Priya S.", initials: "PS", action: "update", entity: "Category", detail: 'Updated category "Electronics > Audio"', time: "1.5 hours ago" },
-  { id: 6, user: "Arjun M.", initials: "AM", action: "create", entity: "Brand", detail: 'Created brand "SoundWave Audio"', time: "2 hours ago" },
-  { id: 7, user: "Rahul K.", initials: "RK", action: "update", entity: "Attribute", detail: 'Added attribute value "Rose Gold" to Color', time: "3 hours ago" },
-  { id: 8, user: "Priya S.", initials: "PS", action: "import", entity: "Products", detail: "Imported 56 products from Shopify", time: "4 hours ago" },
-  { id: 9, user: "Arjun M.", initials: "AM", action: "invite", entity: "Team", detail: "Invited neha@kapxr.com as Editor", time: "5 hours ago" },
-  { id: 10, user: "Rahul K.", initials: "RK", action: "settings", entity: "Settings", detail: "Updated default currency to INR", time: "6 hours ago" },
-  { id: 11, user: "Priya S.", initials: "PS", action: "delete", entity: "Asset", detail: "Deleted 3 unused banner images", time: "8 hours ago" },
-  { id: 12, user: "Arjun M.", initials: "AM", action: "create", entity: "Product", detail: 'Created product "USB-C Hub 7-in-1"', time: "Yesterday" },
-];
+type ActivityLog = {
+  id: number;
+  user_name: string;
+  initials: string;
+  action: string;
+  entity: string;
+  detail: string;
+  time_label: string;
+};
 
 const actionColor: Record<string, string> = {
   create: "bg-primary/10 text-primary",
@@ -48,6 +46,11 @@ const actionColor: Record<string, string> = {
 
 export default function Activity() {
   useAppPageTitle("Activity Log");
+  const { data: logs = [], isLoading } = useQuery({
+    queryKey: ["activity-logs"],
+    queryFn: () => apiClient.get<ActivityLog[]>("/activity/logs"),
+  });
+  if (isLoading) return <AppLoader message="Loading activity…" />;
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         <div className="flex items-center justify-between">
@@ -65,6 +68,9 @@ export default function Activity() {
 
         <Card className="pim-card-shell">
           <CardContent className="p-0 divide-y divide-border/50">
+            {logs.length === 0 && (
+              <div className="px-6 py-10 text-center text-sm text-muted-foreground">No activity logs yet.</div>
+            )}
             {logs.map((log) => {
               const Icon = iconMap[log.action] || Edit;
               return (
@@ -79,14 +85,14 @@ export default function Activity() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs leading-relaxed">
-                      <span className="font-semibold">{log.user}</span>{" "}
+                      <span className="font-semibold">{log.user_name}</span>{" "}
                       <span className="text-muted-foreground">{log.detail}</span>
                     </p>
-                    <p className="text-[10px] text-muted-foreground/70 mt-1 sm:hidden">{log.time}</p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-1 sm:hidden">{log.time_label}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     <Badge variant="outline" className="text-[10px] font-medium shrink-0">{log.entity}</Badge>
-                    <span className="text-[10px] text-muted-foreground/70 hidden sm:inline text-right tabular-nums">{log.time}</span>
+                    <span className="text-[10px] text-muted-foreground/70 hidden sm:inline text-right tabular-nums">{log.time_label}</span>
                   </div>
                 </div>
               );

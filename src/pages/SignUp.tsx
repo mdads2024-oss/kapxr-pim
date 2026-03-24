@@ -6,9 +6,10 @@ import { FormEvent, useMemo, useState } from "react";
 import { notifyError, notifySuccess } from "@/lib/notify";
 import { useToast } from "@/hooks/use-toast";
 import { signInSession } from "@/lib/auth";
+import { insforgeClient } from "@/services/insforgeClient";
 import { CheckCircle2, Sparkles, Rocket, Users } from "lucide-react";
 import { motion } from "framer-motion";
-import { setSelectedPlan } from "@/lib/billingSelection";
+import { setSelectedPlan, type SelectedPlan } from "@/lib/billingSelection";
 import type { BillingInterval } from "@/types/billing";
 
 export default function SignUp() {
@@ -18,16 +19,43 @@ export default function SignUp() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const selectedPlan = useMemo(() => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+
+  const selectedPlan = useMemo<SelectedPlan | null>(() => {
     const plan = searchParams.get("plan");
     const interval = searchParams.get("interval");
     const isPlanValid = plan === "starter" || plan === "growth" || plan === "pro";
     const isIntervalValid = interval === "monthly" || interval === "yearly";
     if (!isPlanValid || !isIntervalValid) return null;
-    return { planCode: plan, interval: interval as BillingInterval };
+    return { planCode: plan as SelectedPlan["planCode"], interval: interval as BillingInterval };
   }, [searchParams]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const buildRedirectUrl = () => {
+    const base = import.meta.env.BASE_URL || "/";
+    const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+    return `${window.location.origin}${normalizedBase}signin`;
+  };
+
+  const handleGoogleSignUp = async () => {
+    try {
+      setIsGoogleSubmitting(true);
+      if (selectedPlan) setSelectedPlan(selectedPlan);
+      const { error } = await insforgeClient.auth.signInWithOAuth({
+        provider: "google",
+        redirectTo: buildRedirectUrl(),
+      });
+      if (error) {
+        notifyError(toast, "Google sign-up failed", error.message);
+      }
+    } catch (err) {
+      notifyError(toast, "Google sign-up failed", err instanceof Error ? err.message : "Unexpected error");
+    } finally {
+      setIsGoogleSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!name.trim() || !email.trim() || !password.trim()) {
       notifyError(toast, "Missing details", "Please complete all fields.");
@@ -38,13 +66,43 @@ export default function SignUp() {
       return;
     }
 
-    if (selectedPlan) {
-      setSelectedPlan(selectedPlan);
-    }
+    try {
+      setIsSubmitting(true);
+      const { data, error } = await insforgeClient.auth.signUp({
+        name: name.trim(),
+        email: email.trim(),
+        password: password.trim(),
+      });
+      if (error) {
+        notifyError(toast, "Sign up failed", error.message || "Unable to create account.");
+        return;
+      }
 
-    signInSession({ name: name.trim(), email: email.trim() });
-    notifySuccess(toast, "Account created", "Your workspace is ready.");
-    navigate(selectedPlan ? "/settings" : "/app");
+      if (selectedPlan) {
+        setSelectedPlan(selectedPlan);
+      }
+
+      if (data?.accessToken && data.user?.email) {
+        signInSession({
+          name: (data.user.profile as { name?: string } | undefined)?.name ?? name.trim(),
+          email: data.user.email,
+        });
+        notifySuccess(toast, "Account created", "Your workspace is ready.");
+        navigate(selectedPlan ? "/settings" : "/app");
+        return;
+      }
+
+      notifySuccess(
+        toast,
+        "Verify your email",
+        "Account created. Please verify your email with the code sent, then sign in."
+      );
+      navigate(`/verify-email?email=${encodeURIComponent(email.trim().toLowerCase())}`);
+    } catch (err) {
+      notifyError(toast, "Sign up failed", err instanceof Error ? err.message : "Unexpected error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -68,8 +126,8 @@ export default function SignUp() {
             </div>
 
             <div className="space-y-4">
-              <Button type="button" variant="outline" className="w-full">
-                Continue with Google
+              <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isGoogleSubmitting}>
+                {isGoogleSubmitting ? "Redirecting..." : "Continue with Google"}
               </Button>
               <div className="relative py-1">
                 <div className="h-px w-full bg-border" />
@@ -90,7 +148,9 @@ export default function SignUp() {
                   <Label htmlFor="password">Password</Label>
                   <Input id="password" type="password" placeholder="Create password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
-                <Button type="submit" className="w-full h-10">Create account</Button>
+                <Button type="submit" className="w-full h-10" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating account..." : "Create account"}
+                </Button>
                 <p className="text-xs text-muted-foreground text-center">
                   Already have an account?{" "}
                   <Link to="/signin" className="text-primary hover:underline">

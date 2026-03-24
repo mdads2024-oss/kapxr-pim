@@ -33,6 +33,8 @@ import {
   useTeamMembersQuery,
 } from "@/hooks/usePimQueries";
 import { toParamSlug } from "@/lib/slug";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/services/api/client";
 
 const brandStatusColor: Record<string, string> = {
   Active: "bg-success/10 text-success border-success/20",
@@ -74,12 +76,21 @@ const quickLinks = [
   { label: "Create New Attribute", icon: Tags, url: "/attributes/new" },
 ];
 
-/** Preview feed (RECENT_LIST_SIZE items) — full log on /activity */
-const activityPreview = [
-  { user: "Arjun M.", action: "create" as const, detail: 'Created product "Wireless Keyboard Pro"', time: "2 min ago", icon: Plus },
-  { user: "Priya S.", action: "export" as const, detail: "Exported 142 products as CSV", time: "18 min ago", icon: Download },
-  { user: "Rahul K.", action: "update" as const, detail: 'Updated category "Electronics > Audio"', time: "1 hour ago", icon: Edit },
-];
+type DashboardActivity = {
+  id: number;
+  user_name: string;
+  action: "create" | "export" | "update" | "delete" | "upload";
+  detail: string;
+  time_label: string;
+};
+
+const iconByAction = {
+  create: Plus,
+  export: Download,
+  update: Edit,
+  delete: AlertTriangle,
+  upload: Upload,
+} as const;
 
 const actionIconBg: Record<string, string> = {
   create: "bg-success/10 text-success",
@@ -116,6 +127,10 @@ export default function Index() {
   const { data: attributes = [], isLoading: attributesLoading } = useAttributesQuery();
   const { data: teamMembers = [], isLoading: teamLoading } = useTeamMembersQuery();
   const { data: brands = [], isLoading: brandsLoading } = useBrandsQuery();
+  const { data: activity = [], isLoading: activityLoading } = useQuery({
+    queryKey: ["dashboard-activity"],
+    queryFn: () => apiClient.get<DashboardActivity[]>("/activity/logs"),
+  });
 
   const isLoading =
     productsLoading ||
@@ -123,7 +138,8 @@ export default function Index() {
     categoriesLoading ||
     attributesLoading ||
     teamLoading ||
-    brandsLoading;
+    brandsLoading ||
+    activityLoading;
 
   const recentBrands = useMemo(() => brands.slice(0, RECENT_LIST_SIZE), [brands]);
 
@@ -360,11 +376,11 @@ export default function Index() {
               </CardHeader>
               <CardContent className="flex flex-1 flex-col p-0 min-h-0">
                 <div className="divide-y divide-border/50 flex flex-1 flex-col">
-                  {activityPreview.slice(0, RECENT_LIST_SIZE).map((a, i) => {
-                    const Icon = a.icon;
+                  {activity.slice(0, RECENT_LIST_SIZE).map((a, i) => {
+                    const Icon = iconByAction[a.action] ?? Edit;
                     return (
                       <button
-                        key={`${a.user}-${a.time}-${i}`}
+                        key={`${a.id}-${i}`}
                         type="button"
                         className="flex w-full items-start gap-3 px-6 py-3.5 text-left hover:bg-accent/30 transition-colors"
                         onClick={() => navigate("/activity")}
@@ -376,14 +392,17 @@ export default function Index() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs leading-relaxed">
-                            <span className="font-semibold">{a.user}</span>{" "}
+                            <span className="font-semibold">{a.user_name}</span>{" "}
                             <span className="text-muted-foreground">{a.detail}</span>
                           </p>
-                          <p className="text-[10px] text-muted-foreground/70 mt-1">{a.time}</p>
+                          <p className="text-[10px] text-muted-foreground/70 mt-1">{a.time_label}</p>
                         </div>
                       </button>
                     );
                   })}
+                  {activity.length === 0 && (
+                    <p className="px-6 py-8 text-sm text-muted-foreground text-center">No activity yet.</p>
+                  )}
                 </div>
               </CardContent>
             </Card>

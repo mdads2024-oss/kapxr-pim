@@ -124,6 +124,13 @@ export default function Attributes() {
                 </tr>
               </thead>
               <tbody>
+                {paginatedAttributes.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-3 py-10 text-center text-sm text-muted-foreground">
+                      No attributes found. Create your first attribute to get started.
+                    </td>
+                  </tr>
+                )}
                 {paginatedAttributes.map((a) => (
                   <tr
                     key={a.id}

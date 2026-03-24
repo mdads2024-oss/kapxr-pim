@@ -1,7 +1,9 @@
 import type { BillingProvider } from "@/services/providers/billingProvider";
 import type {
+  BillingInvoice,
   BillingInterval,
   BillingPlan,
+  BillingUsage,
   StartCheckoutInput,
   WorkspaceSubscription,
 } from "@/types/billing";
@@ -145,5 +147,22 @@ export const mockBillingProvider: BillingProvider = {
     };
     writeSubscription(next);
     return next;
+  },
+  async getUsage() {
+    await delay();
+    const usage: BillingUsage = {
+      storageUsedGb: 312,
+      seatsUsed: 18,
+      connectorsUsed: 5,
+    };
+    return usage;
+  },
+  async getInvoices() {
+    await delay();
+    const invoices: BillingInvoice[] = [
+      { id: "INV-3007", amount: "$129.00", status: "Paid", date: "Mar 01, 2026" },
+      { id: "INV-2974", amount: "$129.00", status: "Paid", date: "Feb 01, 2026" },
+    ];
+    return invoices;
   },
 };

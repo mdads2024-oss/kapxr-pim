@@ -5,18 +5,34 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, FolderTree, Tags, Image, Package, ArrowRight, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/services/api/client";
+import { AppLoader } from "@/components/shared/AppLoader";
 
-const steps = [
-  { label: "Create Brand", icon: Building2, route: "/brands", description: "Define your brand identity" },
-  { label: "Create Category", icon: FolderTree, route: "/categories", description: "Organize product taxonomy" },
-  { label: "Create Attributes", icon: Tags, route: "/attributes", description: "Define product properties" },
-  { label: "Upload Assets", icon: Image, route: "/assets", description: "Add images & media" },
-  { label: "Create Product", icon: Package, route: "/products/new", description: "Build the final product" },
-];
+type WorkflowStep = {
+  id: number;
+  label: string;
+  icon: string;
+  route: string;
+  description: string;
+};
+
+const iconByName: Record<string, typeof Package> = {
+  Building2,
+  FolderTree,
+  Tags,
+  Image,
+  Package,
+};
 
 export default function Workflow() {
   useAppPageTitle("Workflows");
   const navigate = useNavigate();
+  const { data: steps = [], isLoading } = useQuery({
+    queryKey: ["workflow-steps"],
+    queryFn: () => apiClient.get<WorkflowStep[]>("/workflows/steps"),
+  });
+  if (isLoading) return <AppLoader message="Loading workflows…" />;
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
@@ -37,15 +53,18 @@ export default function Workflow() {
                 </div>
               </div>
               <Badge variant="outline" className="text-[10px] gap-1">
-                5 steps
+                {steps.length} steps
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="pt-0 space-y-5">
             {/* Step flow */}
             <div className="flex items-center gap-1 flex-wrap">
+              {steps.length === 0 && (
+                <p className="text-sm text-muted-foreground">No workflow steps configured yet.</p>
+              )}
               {steps.map((step, i) => {
-                const Icon = step.icon;
+                const Icon = iconByName[step.icon] ?? Package;
                 return (
                   <div key={step.label} className="flex items-center gap-1">
                     <button

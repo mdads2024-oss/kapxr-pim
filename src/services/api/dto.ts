@@ -16,6 +16,28 @@ export interface CategoryDto {
   subcategories: string[];
 }
 
+export interface BrandDto {
+  id: number;
+  uuid: string;
+  name: string;
+  description: string;
+  website: string;
+  status: "Active" | "Inactive";
+  products: number;
+  logo: string | null;
+  contact_email?: string;
+  contact_phone?: string;
+  country?: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+}
+
 export interface AssetDto {
   id: number;
   name: string;

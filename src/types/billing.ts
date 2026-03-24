@@ -36,3 +36,16 @@ export type StartCheckoutInput = {
   planCode: BillingPlan["code"];
   interval: BillingInterval;
 };
+
+export type BillingUsage = {
+  storageUsedGb: number;
+  seatsUsed: number;
+  connectorsUsed: number;
+};
+
+export type BillingInvoice = {
+  id: string;
+  amount: string;
+  status: string;
+  date: string;
+};

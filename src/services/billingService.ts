@@ -27,4 +27,10 @@ export const billingService = {
   async changePlan(input: StartCheckoutInput) {
     return activeProvider.changePlan(input);
   },
+  async getUsage() {
+    return activeProvider.getUsage();
+  },
+  async getInvoices() {
+    return activeProvider.getInvoices();
+  },
 };
