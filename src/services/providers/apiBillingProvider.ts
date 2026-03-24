@@ -9,7 +9,7 @@ import type {
 } from "@/types/billing";
 
 type ApiBillingPlan = {
-  id: number;
+  id: string;
   code: "starter" | "growth" | "pro";
   name: string;
   description: string;

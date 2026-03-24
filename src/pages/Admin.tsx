@@ -14,7 +14,7 @@ import { useMemo, useState } from "react";
 
 type AdminMe = { email: string | null; isAdmin: boolean };
 type AdminUser = {
-  id: number;
+  id: string;
   email: string;
   display_name: string | null;
   role: string;
@@ -28,7 +28,7 @@ type AdminConfig = {
   default_billing_interval: "monthly" | "yearly";
 };
 type BillingPlan = {
-  id: number;
+  id: string;
   code: "starter" | "growth" | "pro";
   name: string;
   monthly_price: number | string;
@@ -63,7 +63,7 @@ export default function AdminPage() {
   });
 
   const [draftConfig, setDraftConfig] = useState<AdminConfig | null>(null);
-  const [planDrafts, setPlanDrafts] = useState<Record<number, BillingPlan>>({});
+  const [planDrafts, setPlanDrafts] = useState<Record<string, BillingPlan>>({});
 
   const effectiveConfig = useMemo(() => draftConfig ?? config ?? null, [draftConfig, config]);
   const effectivePlans = useMemo(
@@ -79,7 +79,7 @@ export default function AdminPage() {
   });
 
   const savePlanMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: Partial<BillingPlan> }) =>
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<BillingPlan> }) =>
       apiClient.patch(`/admin/billing/plans/${id}`, payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["admin-plans"] });
@@ -125,7 +125,7 @@ export default function AdminPage() {
     }
   };
 
-  const savePlan = async (planId: number) => {
+  const savePlan = async (planId: string) => {
     const draft = planDrafts[planId];
     if (!draft) return;
     try {

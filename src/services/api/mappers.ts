@@ -41,7 +41,7 @@ export const mapCategoryDtoToModel = (dto: CategoryDto): Category => ({
 
 export const mapBrandDtoToModel = (dto: BrandDto): Brand => ({
   id: dto.id,
-  uuid: dto.uuid,
+  uuid: dto.uuid ?? dto.id,
   name: dto.name,
   description: dto.description,
   website: dto.website,

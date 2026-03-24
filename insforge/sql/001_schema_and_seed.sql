@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS workspace_members (
 CREATE TABLE IF NOT EXISTS brands (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id INT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
-  uuid TEXT NOT NULL,
   name TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   website TEXT NOT NULL DEFAULT '',
@@ -37,8 +36,7 @@ CREATE TABLE IF NOT EXISTS brands (
   country TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
-  created_by TEXT NOT NULL DEFAULT 'system',
-  UNIQUE (workspace_id, uuid)
+  created_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE TABLE IF NOT EXISTS categories (
@@ -132,7 +130,7 @@ CREATE TABLE IF NOT EXISTS team_members (
 );
 
 CREATE TABLE IF NOT EXISTS billing_plans (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT NOT NULL UNIQUE CHECK (code IN ('starter','growth','pro')),
   name TEXT NOT NULL,
   description TEXT NOT NULL,
@@ -146,7 +144,7 @@ CREATE TABLE IF NOT EXISTS billing_plans (
 );
 
 CREATE TABLE IF NOT EXISTS workspace_subscriptions (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id INT NOT NULL UNIQUE REFERENCES workspaces(id) ON DELETE CASCADE,
   organization_name TEXT NOT NULL,
   plan_code TEXT NOT NULL REFERENCES billing_plans(code),

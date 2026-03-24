@@ -10,7 +10,7 @@ import { apiClient } from "@/services/api/client";
 import { AppLoader } from "@/components/shared/AppLoader";
 
 type WorkflowStep = {
-  id: number;
+  id: string;
   label: string;
   icon: string;
   route: string;

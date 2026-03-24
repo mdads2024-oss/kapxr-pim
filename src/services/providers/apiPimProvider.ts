@@ -24,7 +24,6 @@ import {
 } from "@/services/api/mappers";
 
 const toBrandApiPayload = (data: Record<string, unknown>) => ({
-  uuid: data.uuid,
   name: data.name,
   description: data.description,
   website: data.website,

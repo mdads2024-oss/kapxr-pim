@@ -44,17 +44,12 @@ export default function AddBrand() {
       toast({ title: "Fix highlighted fields", variant: "destructive" });
       return;
     }
-    const uuid =
-      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-        ? crypto.randomUUID()
-        : `brand-${Date.now()}`;
     let logoMeta: { logoUrl: string; logoObjectKey: string; logoBucketName: string } | null = null;
     if (logoFile) {
       logoMeta = await uploadBrandLogo(logoFile);
     }
 
     const created = await createBrandMutation.mutateAsync({
-      uuid,
       name: name.trim(),
       description: description.trim() || "No description yet.",
       website: website.trim() || "https://",

@@ -18,7 +18,7 @@ export interface CategoryDto {
 
 export interface BrandDto {
   id: string;
-  uuid: string;
+  uuid?: string;
   name: string;
   description: string;
   website: string;

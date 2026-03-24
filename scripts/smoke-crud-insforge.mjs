@@ -65,7 +65,6 @@ const safe = async (name, fn) => {
 
 await safe("brands CRUD with logo", async () => {
   const created = await invoke("brands", "POST", {
-    uuid: `brand-${nowToken}`,
     name: `Smoke Brand ${nowToken}`,
     description: "Smoke test",
     website: "https://example.com",

@@ -24,7 +24,7 @@ const iconMap: Record<string, typeof Package> = {
 };
 
 type ActivityLog = {
-  id: number;
+  id: string;
   user_name: string;
   initials: string;
   action: string;

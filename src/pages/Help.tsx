@@ -14,8 +14,8 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/services/api/client";
 import { AppLoader } from "@/components/shared/AppLoader";
 
-type HelpFaq = { id: number; question: string; answer: string };
-type HelpTutorial = { id: number; title: string; duration: string; type: string };
+type HelpFaq = { id: string; question: string; answer: string };
+type HelpTutorial = { id: string; title: string; duration: string; type: string };
 
 export default function Help() {
   useAppPageTitle("Help & Support");
