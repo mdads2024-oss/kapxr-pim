@@ -53,9 +53,6 @@ export default function BillingPage() {
         : upgradePlan.monthlyPrice
       : 0;
   const checkoutPlanCode = upgradePlan?.code ?? activePlan?.code ?? "pro";
-  if (isLoading) {
-    return <AppLoader message="Loading billing…" />;
-  }
 
   const handleActivateSelectedPlan = async () => {
     if (!selectedPlan) return;
@@ -106,6 +103,10 @@ export default function BillingPage() {
     },
     [toast]
   );
+
+  if (isLoading) {
+    return <AppLoader message="Loading billing…" />;
+  }
 
   return (
     <>

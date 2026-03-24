@@ -42,7 +42,8 @@ const queryClient = new QueryClient();
 /** Support GitHub Pages project URLs (`/<repo>/`) via Vite `base` → `import.meta.env.BASE_URL` */
 const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, "") || undefined;
 const shouldUseHashRouter =
-  typeof window !== "undefined" && window.location.hostname.endsWith("insforge.site");
+  typeof window !== "undefined" &&
+  (window.location.hostname.endsWith("insforge.site") || window.location.hostname.endsWith("github.io"));
 const RouterComponent = shouldUseHashRouter ? HashRouter : BrowserRouter;
 
 function RequireAuth() {
