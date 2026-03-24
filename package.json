@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "health:insforge": "node ./scripts/health-check-insforge.mjs",
+    "smoke:insforge": "node ./scripts/smoke-crud-insforge.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

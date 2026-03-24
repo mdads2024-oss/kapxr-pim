@@ -53,11 +53,27 @@ export const apiPimProvider: PIMProvider = {
     return mapBrandDtoToModel(response);
   },
   async createBrand(data) {
-    const response = await apiClient.post<BrandDto>("/brands", data);
+    const payload = {
+      ...data,
+      contact_email: data.contactEmail,
+      contact_phone: data.contactPhone,
+      created_at: data.createdAt,
+      updated_at: data.updatedAt,
+      created_by: data.createdBy,
+    };
+    const response = await apiClient.post<BrandDto>("/brands", payload);
     return mapBrandDtoToModel(response);
   },
   async updateBrand(id, data) {
-    const response = await apiClient.patch<BrandDto>(`/brands/${id}`, data);
+    const payload = {
+      ...data,
+      contact_email: data.contactEmail,
+      contact_phone: data.contactPhone,
+      created_at: data.createdAt,
+      updated_at: data.updatedAt,
+      created_by: data.createdBy,
+    };
+    const response = await apiClient.patch<BrandDto>(`/brands/${id}`, payload);
     return mapBrandDtoToModel(response);
   },
   async deleteBrand(id) {

@@ -13,7 +13,7 @@ import { ArrowLeft, Save, Building2, Upload, Package, Hash, Clock, User, Copy } 
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useBrandQuery, useUpdateBrandMutation } from "@/hooks/usePimQueries";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { notifySuccess } from "@/lib/notify";
 import type { Brand } from "@/types/pim";
@@ -59,11 +59,22 @@ export default function BrandDetail() {
         contactEmail: form.contactEmail ?? "",
         contactPhone: form.contactPhone ?? "",
         country: form.country ?? "",
+        logo: form.logo ?? null,
         status: form.status ?? "Active",
         updatedAt: formatNow(),
       },
     });
     notifySuccess(toast, "Brand saved");
+  };
+
+  const handleLogoUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((f) => ({ ...f, logo: typeof reader.result === "string" ? reader.result : null }));
+    };
+    reader.readAsDataURL(file);
   };
 
   if (!Number.isFinite(id)) {
@@ -191,11 +202,28 @@ export default function BrandDetail() {
             <CardContent>
               <div className="flex items-center gap-6">
                 <div className="h-24 w-24 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                  <Building2 className="h-10 w-10 text-muted-foreground/50" />
+                  {b.logo ? (
+                    <img src={b.logo} alt={`${b.name} logo`} className="h-24 w-24 rounded-lg object-cover" />
+                  ) : (
+                    <Building2 className="h-10 w-10 text-muted-foreground/50" />
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Button variant="outline" size="sm" className="gap-1.5" type="button">
-                    <Upload className="h-3.5 w-3.5" /> Upload Logo
+                  <Button variant="outline" size="sm" className="gap-1.5" type="button" asChild>
+                    <label className="cursor-pointer">
+                      <Upload className="h-3.5 w-3.5" /> Upload Logo
+                      <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                    </label>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, logo: null }))}
+                    disabled={!b.logo}
+                  >
+                    Remove Logo
                   </Button>
                   <p className="text-xs text-muted-foreground">Recommended: 400×400px, PNG or SVG</p>
                 </div>

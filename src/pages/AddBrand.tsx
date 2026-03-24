@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Building2, Upload, Globe, Mail, Phone } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateBrandMutation } from "@/hooks/usePimQueries";
@@ -28,6 +28,7 @@ export default function AddBrand() {
   const [website, setWebsite] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [logo, setLogo] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
   
 
@@ -51,7 +52,7 @@ export default function AddBrand() {
       website: website.trim() || "https://",
       status: isActive ? "Active" : "Inactive",
       products: 0,
-      logo: null,
+      logo,
       contactEmail: email.trim() || "hello@example.com",
       contactPhone: phone.trim() || "–",
       country: "India",
@@ -61,6 +62,16 @@ export default function AddBrand() {
     });
     notifySuccess(toast, "Brand created", `"${created.name}" has been added.`);
     navigate(`/brands/${created.id}`);
+  };
+
+  const handleLogoUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setLogo(typeof reader.result === "string" ? reader.result : null);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -161,10 +172,15 @@ export default function AddBrand() {
                 <CardTitle className="text-base">Brand Logo</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center space-y-3">
+                  {logo ? (
+                    <img src={logo} alt="Brand logo preview" className="mx-auto h-16 w-16 rounded-lg object-cover border" />
+                  ) : (
+                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  )}
                   <p className="text-sm font-medium">Drop a logo here or click to upload</p>
                   <p className="text-xs text-muted-foreground mt-1">PNG, JPG, SVG up to 2MB. Recommended: 400×400px</p>
+                  <Input type="file" accept="image/*" onChange={handleLogoUpload} />
                 </div>
               </CardContent>
             </Card>
