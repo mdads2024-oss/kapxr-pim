@@ -38,6 +38,14 @@ jobs:
         env:
           # Must match your repository name (https://<user>.github.io/<repo>/)
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_PIM_DATA_SOURCE: ${{ secrets.VITE_PIM_DATA_SOURCE }}
+          VITE_BILLING_DATA_SOURCE: ${{ secrets.VITE_BILLING_DATA_SOURCE }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_INSFORGE_FUNCTION_MODE: ${{ secrets.VITE_INSFORGE_FUNCTION_MODE }}
+          VITE_INSFORGE_BASE_URL: ${{ secrets.VITE_INSFORGE_BASE_URL }}
+          VITE_INSFORGE_FUNCTION_SLUG: ${{ secrets.VITE_INSFORGE_FUNCTION_SLUG }}
+          VITE_INSFORGE_ANON_KEY: ${{ secrets.VITE_INSFORGE_ANON_KEY }}
+          VITE_WORKSPACE_SLUG: ${{ secrets.VITE_WORKSPACE_SLUG }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
