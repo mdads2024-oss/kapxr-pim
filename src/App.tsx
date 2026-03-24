@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { BrowserRouter, HashRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,6 +41,9 @@ const queryClient = new QueryClient();
 
 /** Support GitHub Pages project URLs (`/<repo>/`) via Vite `base` → `import.meta.env.BASE_URL` */
 const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, "") || undefined;
+const shouldUseHashRouter =
+  typeof window !== "undefined" && window.location.hostname.endsWith("insforge.site");
+const RouterComponent = shouldUseHashRouter ? HashRouter : BrowserRouter;
 
 function RequireAuth() {
   if (!isAuthenticated()) return <Navigate to="/signin" replace />;
@@ -57,7 +60,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter basename={routerBasename}>
+      <RouterComponent basename={shouldUseHashRouter ? undefined : routerBasename}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Navigate to="/signin" replace />} />
@@ -102,7 +105,7 @@ const App = () => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
+      </RouterComponent>
     </TooltipProvider>
   </QueryClientProvider>
 );
