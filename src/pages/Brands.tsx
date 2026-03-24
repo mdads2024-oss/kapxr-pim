@@ -48,7 +48,7 @@ export default function Brands() {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
-  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const filteredBrands = useMemo(
     () =>
@@ -71,7 +71,7 @@ export default function Brands() {
     return filteredBrands.slice(start, start + pageSize);
   }, [filteredBrands, safePage]);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     await deleteBrandMutation.mutateAsync(id);
     notifySuccess(toast, "Brand deleted");
   };
@@ -89,7 +89,7 @@ export default function Brands() {
     notifySuccess(toast, "Brand duplicated");
   };
 
-  const handleStatusChange = async (id: number, status: "Active" | "Inactive") => {
+  const handleStatusChange = async (id: string, status: "Active" | "Inactive") => {
     await updateBrandMutation.mutateAsync({
       id,
       data: { status, updatedAt: formatNow() },
