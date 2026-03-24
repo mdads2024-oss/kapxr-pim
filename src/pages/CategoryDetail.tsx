@@ -52,7 +52,7 @@ export default function CategoryDetail() {
     [categories, category?.id]
   );
 
-  const uuid = category ? `cat-${category.id}-a1b2-c3d4-e5f6` : "";
+  const entityId = category?.id ?? "";
 
   const handleNameChange = (value: string) => {
     setName(value);
@@ -69,8 +69,8 @@ export default function CategoryDetail() {
 
   const removeSubcategory = (sub: string) => setSubcategories(subcategories.filter((s) => s !== sub));
 
-  const copyUuid = () => {
-    navigator.clipboard.writeText(uuid);
+  const copyId = () => {
+    navigator.clipboard.writeText(entityId);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -257,10 +257,10 @@ export default function CategoryDetail() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Category UUID</Label>
+                  <Label className="text-xs text-muted-foreground">Category ID</Label>
                   <div className="flex items-center gap-2">
-                    <code className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate">{uuid}</code>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={copyUuid}>
+                    <code className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate">{entityId}</code>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={copyId}>
                       {copied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                     </Button>
                   </div>
