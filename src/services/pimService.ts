@@ -1,5 +1,6 @@
 import { mockPimProvider } from "@/services/providers/mockPimProvider";
 import type { PIMProvider } from "@/services/providers/pimProvider";
+import type { PimEntityId } from "@/types/pim";
 
 let activeProvider: PIMProvider = mockPimProvider;
 
@@ -12,7 +13,7 @@ export const pimService = {
     return activeProvider.getProducts();
   },
 
-  async getProductById(id: number) {
+  async getProductById(id: PimEntityId) {
     return activeProvider.getProductById(id);
   },
 
@@ -20,11 +21,11 @@ export const pimService = {
     return activeProvider.createProduct(data);
   },
 
-  async updateProduct(id: number, data: Parameters<PIMProvider["updateProduct"]>[1]) {
+  async updateProduct(id: PimEntityId, data: Parameters<PIMProvider["updateProduct"]>[1]) {
     return activeProvider.updateProduct(id, data);
   },
 
-  async deleteProduct(id: number) {
+  async deleteProduct(id: PimEntityId) {
     return activeProvider.deleteProduct(id);
   },
 
@@ -32,7 +33,7 @@ export const pimService = {
     return activeProvider.getBrands();
   },
 
-  async getBrandById(id: number) {
+  async getBrandById(id: PimEntityId) {
     return activeProvider.getBrandById(id);
   },
 
@@ -40,11 +41,11 @@ export const pimService = {
     return activeProvider.createBrand(data);
   },
 
-  async updateBrand(id: number, data: Parameters<PIMProvider["updateBrand"]>[1]) {
+  async updateBrand(id: PimEntityId, data: Parameters<PIMProvider["updateBrand"]>[1]) {
     return activeProvider.updateBrand(id, data);
   },
 
-  async deleteBrand(id: number) {
+  async deleteBrand(id: PimEntityId) {
     return activeProvider.deleteBrand(id);
   },
 
@@ -56,11 +57,11 @@ export const pimService = {
     return activeProvider.createCategory(data);
   },
 
-  async updateCategory(id: number, data: Parameters<PIMProvider["updateCategory"]>[1]) {
+  async updateCategory(id: PimEntityId, data: Parameters<PIMProvider["updateCategory"]>[1]) {
     return activeProvider.updateCategory(id, data);
   },
 
-  async deleteCategory(id: number) {
+  async deleteCategory(id: PimEntityId) {
     return activeProvider.deleteCategory(id);
   },
 
@@ -72,11 +73,11 @@ export const pimService = {
     return activeProvider.createAsset(data);
   },
 
-  async updateAsset(id: number, data: Parameters<PIMProvider["updateAsset"]>[1]) {
+  async updateAsset(id: PimEntityId, data: Parameters<PIMProvider["updateAsset"]>[1]) {
     return activeProvider.updateAsset(id, data);
   },
 
-  async deleteAsset(id: number) {
+  async deleteAsset(id: PimEntityId) {
     return activeProvider.deleteAsset(id);
   },
 
@@ -88,11 +89,11 @@ export const pimService = {
     return activeProvider.createAttribute(data);
   },
 
-  async updateAttribute(id: number, data: Parameters<PIMProvider["updateAttribute"]>[1]) {
+  async updateAttribute(id: PimEntityId, data: Parameters<PIMProvider["updateAttribute"]>[1]) {
     return activeProvider.updateAttribute(id, data);
   },
 
-  async deleteAttribute(id: number) {
+  async deleteAttribute(id: PimEntityId) {
     return activeProvider.deleteAttribute(id);
   },
 
@@ -100,7 +101,7 @@ export const pimService = {
     return activeProvider.getIntegrations();
   },
 
-  async updateIntegration(id: number, data: Parameters<PIMProvider["updateIntegration"]>[1]) {
+  async updateIntegration(id: PimEntityId, data: Parameters<PIMProvider["updateIntegration"]>[1]) {
     return activeProvider.updateIntegration(id, data);
   },
 
@@ -126,11 +127,11 @@ export const pimService = {
     return activeProvider.createTeamMember(data);
   },
 
-  async updateTeamMember(id: number, data: Parameters<PIMProvider["updateTeamMember"]>[1]) {
+  async updateTeamMember(id: PimEntityId, data: Parameters<PIMProvider["updateTeamMember"]>[1]) {
     return activeProvider.updateTeamMember(id, data);
   },
 
-  async deleteTeamMember(id: number) {
+  async deleteTeamMember(id: PimEntityId) {
     return activeProvider.deleteTeamMember(id);
   },
 };

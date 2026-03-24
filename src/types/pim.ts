@@ -1,5 +1,7 @@
+export type PimEntityId = string;
+
 export interface Product {
-  id: number;
+  id: PimEntityId;
   name: string;
   sku: string;
   category: string;
@@ -10,7 +12,7 @@ export interface Product {
 }
 
 export interface Asset {
-  id: number;
+  id: PimEntityId;
   name: string;
   type: "Image" | "Video" | "Document";
   size: string;
@@ -20,7 +22,7 @@ export interface Asset {
 }
 
 export interface Brand {
-  id: number;
+  id: PimEntityId;
   uuid: string;
   name: string;
   description: string;
@@ -37,14 +39,14 @@ export interface Brand {
 }
 
 export interface Category {
-  id: number;
+  id: PimEntityId;
   name: string;
   products: number;
   subcategories: string[];
 }
 
 export interface Attribute {
-  id: number;
+  id: PimEntityId;
   name: string;
   type: "Text" | "Rich Text" | "Number" | "Select" | "Multi-select";
   group: string;
@@ -54,7 +56,7 @@ export interface Attribute {
 }
 
 export interface Integration {
-  id: number;
+  id: PimEntityId;
   name: string;
   description: string;
   logo: string;
@@ -64,7 +66,7 @@ export interface Integration {
 }
 
 export interface ImportExportHistoryItem {
-  id: number;
+  id: PimEntityId;
   name: string;
   type: "Import" | "Export";
   status: "Completed" | "Failed";
@@ -74,7 +76,7 @@ export interface ImportExportHistoryItem {
 }
 
 export interface TeamMember {
-  id: number;
+  id: PimEntityId;
   name: string;
   email: string;
   role: "Admin" | "Editor" | "Viewer";
@@ -83,7 +85,7 @@ export interface TeamMember {
 }
 
 export interface AnalyticsMetric {
-  id: number;
+  id: PimEntityId;
   label: string;
   value: string;
   change: string;

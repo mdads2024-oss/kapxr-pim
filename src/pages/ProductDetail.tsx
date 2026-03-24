@@ -35,7 +35,7 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { id } = useParams();
-  const productId = Number(id);
+  const productId = id || "";
   const { data: product, isLoading } = useProductQuery(productId);
   useAppPageTitle(isLoading ? "Product" : !product ? "Product not found" : product.name);
   const updateProductMutation = useUpdateProductMutation();

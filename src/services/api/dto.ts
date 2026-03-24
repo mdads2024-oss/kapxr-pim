@@ -1,5 +1,5 @@
 export interface ProductDto {
-  id: number;
+  id: string;
   name: string;
   sku: string;
   category: string;
@@ -10,14 +10,14 @@ export interface ProductDto {
 }
 
 export interface CategoryDto {
-  id: number;
+  id: string;
   name: string;
   products: number;
   subcategories: string[];
 }
 
 export interface BrandDto {
-  id: number;
+  id: string;
   uuid: string;
   name: string;
   description: string;
@@ -39,7 +39,7 @@ export interface BrandDto {
 }
 
 export interface AssetDto {
-  id: number;
+  id: string;
   name: string;
   type: "Image" | "Video" | "Document";
   size: string;
@@ -49,7 +49,7 @@ export interface AssetDto {
 }
 
 export interface AttributeDto {
-  id: number;
+  id: string;
   name: string;
   type: "Text" | "Rich Text" | "Number" | "Select" | "Multi-select";
   group: string;
@@ -59,7 +59,7 @@ export interface AttributeDto {
 }
 
 export interface IntegrationDto {
-  id: number;
+  id: string;
   name: string;
   description: string;
   logo: string;
@@ -69,7 +69,7 @@ export interface IntegrationDto {
 }
 
 export interface ImportExportHistoryItemDto {
-  id: number;
+  id: string;
   name: string;
   type: "Import" | "Export";
   status: "Completed" | "Failed";
@@ -79,14 +79,14 @@ export interface ImportExportHistoryItemDto {
 }
 
 export interface AnalyticsMetricDto {
-  id: number;
+  id: string;
   label: string;
   value: string;
   change: string;
 }
 
 export interface TeamMemberDto {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: "Admin" | "Editor" | "Viewer";

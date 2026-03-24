@@ -30,7 +30,7 @@ function formatNow() {
 export default function BrandDetail() {
   const navigate = useNavigate();
   const { id: idParam } = useParams();
-  const id = Number(idParam);
+  const id = idParam || "";
   const { toast } = useToast();
   const { data: brand, isLoading, isError } = useBrandQuery(id);
   const updateBrandMutation = useUpdateBrandMutation();
@@ -77,7 +77,7 @@ export default function BrandDetail() {
     reader.readAsDataURL(file);
   };
 
-  if (!Number.isFinite(id)) {
+  if (!id) {
     return (
       <div className="text-sm text-muted-foreground">
         Invalid brand.{" "}

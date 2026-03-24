@@ -11,6 +11,7 @@ import type {
   Product,
   TeamMember,
 } from "@/types/pim";
+import type { PimEntityId } from "@/types/pim";
 
 export const useProductsQuery = () =>
   useQuery({
@@ -30,18 +31,18 @@ export const useBrandsQuery = () =>
     queryFn: () => pimService.getBrands(),
   });
 
-export const useBrandQuery = (id: number) =>
+export const useBrandQuery = (id: PimEntityId) =>
   useQuery({
     queryKey: [...queryKeys.brands(), id] as const,
     queryFn: () => pimService.getBrandById(id),
-    enabled: Number.isFinite(id),
+    enabled: Boolean(id),
   });
 
-export const useProductQuery = (id: number) =>
+export const useProductQuery = (id: PimEntityId) =>
   useQuery({
     queryKey: [...queryKeys.products(), id],
     queryFn: () => pimService.getProductById(id),
-    enabled: Number.isFinite(id),
+    enabled: Boolean(id),
   });
 
 export const useAssetsQuery = () =>
@@ -93,7 +94,7 @@ export const useCreateBrandMutation = () => {
 export const useUpdateBrandMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { id: number; data: Partial<Omit<Brand, "id">> }) =>
+    mutationFn: (payload: { id: PimEntityId; data: Partial<Omit<Brand, "id">> }) =>
       pimService.updateBrand(payload.id, payload.data),
     onSuccess: async (_data, variables) => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.brands() });
@@ -105,7 +106,7 @@ export const useUpdateBrandMutation = () => {
 export const useDeleteBrandMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => pimService.deleteBrand(id),
+    mutationFn: (id: PimEntityId) => pimService.deleteBrand(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.brands() });
     },
@@ -120,7 +121,7 @@ export const useCreateCategoryMutation = () => {
       await queryClient.cancelQueries({ queryKey: queryKeys.categories() });
       const previous = queryClient.getQueryData<Category[]>(queryKeys.categories()) ?? [];
       const optimisticItem: Category = {
-        id: Date.now(),
+        id: `temp-category-${Date.now()}`,
         ...payload,
       };
       queryClient.setQueryData<Category[]>(queryKeys.categories(), [...previous, optimisticItem]);
@@ -140,7 +141,7 @@ export const useCreateCategoryMutation = () => {
 export const useUpdateCategoryMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { id: number; data: Partial<Omit<Category, "id">> }) =>
+    mutationFn: (payload: { id: PimEntityId; data: Partial<Omit<Category, "id">> }) =>
       pimService.updateCategory(payload.id, payload.data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.categories() });
@@ -151,7 +152,7 @@ export const useUpdateCategoryMutation = () => {
 export const useDeleteCategoryMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => pimService.deleteCategory(id),
+    mutationFn: (id: PimEntityId) => pimService.deleteCategory(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.categories() });
       await queryClient.invalidateQueries({ queryKey: queryKeys.products() });
@@ -167,7 +168,7 @@ export const useCreateProductMutation = () => {
       await queryClient.cancelQueries({ queryKey: queryKeys.products() });
       const previous = queryClient.getQueryData<Product[]>(queryKeys.products()) ?? [];
       const optimisticItem: Product = {
-        id: Date.now(),
+        id: `temp-product-${Date.now()}`,
         ...payload,
       };
       queryClient.setQueryData<Product[]>(queryKeys.products(), [...previous, optimisticItem]);
@@ -188,7 +189,7 @@ export const useCreateProductMutation = () => {
 export const useUpdateProductMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { id: number; data: Partial<Omit<Product, "id">> }) =>
+    mutationFn: (payload: { id: PimEntityId; data: Partial<Omit<Product, "id">> }) =>
       pimService.updateProduct(payload.id, payload.data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.products() });
@@ -199,7 +200,7 @@ export const useUpdateProductMutation = () => {
 export const useDeleteProductMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => pimService.deleteProduct(id),
+    mutationFn: (id: PimEntityId) => pimService.deleteProduct(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.products() });
       await queryClient.invalidateQueries({ queryKey: queryKeys.categories() });
@@ -220,7 +221,7 @@ export const useCreateAssetMutation = () => {
 export const useUpdateAssetMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { id: number; data: Partial<Omit<Asset, "id">> }) =>
+    mutationFn: (payload: { id: PimEntityId; data: Partial<Omit<Asset, "id">> }) =>
       pimService.updateAsset(payload.id, payload.data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.assets() });
@@ -231,7 +232,7 @@ export const useUpdateAssetMutation = () => {
 export const useDeleteAssetMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => pimService.deleteAsset(id),
+    mutationFn: (id: PimEntityId) => pimService.deleteAsset(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.assets() });
     },
@@ -251,7 +252,7 @@ export const useCreateAttributeMutation = () => {
 export const useUpdateAttributeMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { id: number; data: Partial<Omit<Attribute, "id">> }) =>
+    mutationFn: (payload: { id: PimEntityId; data: Partial<Omit<Attribute, "id">> }) =>
       pimService.updateAttribute(payload.id, payload.data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.attributes() });
@@ -262,7 +263,7 @@ export const useUpdateAttributeMutation = () => {
 export const useDeleteAttributeMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => pimService.deleteAttribute(id),
+    mutationFn: (id: PimEntityId) => pimService.deleteAttribute(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.attributes() });
     },
@@ -272,7 +273,7 @@ export const useDeleteAttributeMutation = () => {
 export const useUpdateIntegrationMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { id: number; data: Partial<Omit<Integration, "id">> }) =>
+    mutationFn: (payload: { id: PimEntityId; data: Partial<Omit<Integration, "id">> }) =>
       pimService.updateIntegration(payload.id, payload.data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.integrations() });
@@ -304,7 +305,7 @@ export const useCreateTeamMemberMutation = () => {
 export const useDeleteTeamMemberMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => pimService.deleteTeamMember(id),
+    mutationFn: (id: PimEntityId) => pimService.deleteTeamMember(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.teamMembers() });
     },
@@ -314,7 +315,7 @@ export const useDeleteTeamMemberMutation = () => {
 export const useUpdateTeamMemberMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { id: number; data: Partial<Omit<TeamMember, "id">> }) =>
+    mutationFn: (payload: { id: PimEntityId; data: Partial<Omit<TeamMember, "id">> }) =>
       pimService.updateTeamMember(payload.id, payload.data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.teamMembers() });
