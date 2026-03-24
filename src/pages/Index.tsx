@@ -109,6 +109,13 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
+type Trend = "up" | "down" | "neutral";
+
+const getGrowthMeta = (count: number, fallback: { change: string; trend: Exclude<Trend, "neutral"> }) => {
+  if (count === 0) return { change: "No data", trend: "neutral" as const };
+  return fallback;
+};
+
 function parseAccent(accent: string) {
   const parts = accent.trim().split(/\s+/);
   return {
@@ -151,48 +158,42 @@ export default function Index() {
         label: "Total Products",
         value: products.length.toLocaleString(),
         icon: Package,
-        change: "+12%",
-        trend: "up" as const,
+        ...getGrowthMeta(products.length, { change: "+12%", trend: "up" }),
         accent: statAccents.products,
       },
       {
         label: "Assets",
         value: assets.length.toLocaleString(),
         icon: Image,
-        change: "+8%",
-        trend: "up" as const,
+        ...getGrowthMeta(assets.length, { change: "+8%", trend: "up" }),
         accent: statAccents.assets,
       },
       {
         label: "Team",
         value: teamMembers.length.toLocaleString(),
         icon: Building2,
-        change: "+2",
-        trend: "up" as const,
+        ...getGrowthMeta(teamMembers.length, { change: "+2", trend: "up" }),
         accent: statAccents.team,
       },
       {
         label: "Categories",
         value: categories.length.toLocaleString(),
         icon: FolderTree,
-        change: "+3",
-        trend: "up" as const,
+        ...getGrowthMeta(categories.length, { change: "+3", trend: "up" }),
         accent: statAccents.categories,
       },
       {
         label: "Attributes",
         value: attributes.length.toLocaleString(),
         icon: Tags,
-        change: "+5",
-        trend: "up" as const,
+        ...getGrowthMeta(attributes.length, { change: "+5", trend: "up" }),
         accent: statAccents.attributes,
       },
       {
         label: "Incomplete",
         value: incompleteCount.toLocaleString(),
         icon: AlertTriangle,
-        change: "-15%",
-        trend: "down" as const,
+        ...getGrowthMeta(incompleteCount, { change: "-15%", trend: "down" }),
         accent: statAccents.incomplete,
       },
     ],
@@ -267,10 +268,14 @@ export default function Index() {
                       </div>
                       <span
                         className={`text-[11px] font-semibold flex items-center gap-0.5 px-1.5 py-0.5 rounded-md ${
-                          s.trend === "up" ? "text-success bg-success/10" : "text-warning bg-warning/10"
+                          s.trend === "up"
+                            ? "text-success bg-success/10"
+                            : s.trend === "down"
+                              ? "text-warning bg-warning/10"
+                              : "text-muted-foreground bg-muted"
                         }`}
                       >
-                        <TrendingUp className={`h-3 w-3 ${s.trend === "down" ? "rotate-180" : ""}`} />
+                        <TrendingUp className={`h-3 w-3 ${s.trend === "down" ? "rotate-180" : s.trend === "neutral" ? "opacity-40" : ""}`} />
                         {s.change}
                       </span>
                     </div>
