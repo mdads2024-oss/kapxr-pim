@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateBrandMutation } from "@/hooks/usePimQueries";
 import { notifySuccess } from "@/lib/notify";
+import { uploadBrandLogo } from "@/services/storage/brandLogoStorage";
 
 function formatNow() {
   return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -29,22 +30,29 @@ export default function AddBrand() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [logo, setLogo] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isActive, setIsActive] = useState(true);
-  
+  const [errors, setErrors] = useState<{ name?: string; email?: string; website?: string }>({});
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      toast({
-        title: "Missing fields",
-        description: "Please provide a brand name.",
-        variant: "destructive",
-      });
+    const nextErrors: { name?: string; email?: string; website?: string } = {};
+    if (!name.trim()) nextErrors.name = "Brand name is required.";
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) nextErrors.email = "Enter a valid email.";
+    if (website.trim() && !/^https?:\/\//i.test(website.trim())) nextErrors.website = "Website must start with http:// or https://";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      toast({ title: "Fix highlighted fields", variant: "destructive" });
       return;
     }
     const uuid =
       typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
         ? crypto.randomUUID()
         : `brand-${Date.now()}`;
+    let logoMeta: { logoUrl: string; logoObjectKey: string; logoBucketName: string } | null = null;
+    if (logoFile) {
+      logoMeta = await uploadBrandLogo(logoFile);
+    }
+
     const created = await createBrandMutation.mutateAsync({
       uuid,
       name: name.trim(),
@@ -52,7 +60,10 @@ export default function AddBrand() {
       website: website.trim() || "https://",
       status: isActive ? "Active" : "Inactive",
       products: 0,
-      logo,
+      logo: logoMeta?.logoUrl ?? null,
+      logoUrl: logoMeta?.logoUrl ?? null,
+      logoObjectKey: logoMeta?.logoObjectKey ?? null,
+      logoBucketName: logoMeta?.logoBucketName ?? null,
       contactEmail: email.trim() || "hello@example.com",
       contactPhone: phone.trim() || "–",
       country: "India",
@@ -60,6 +71,14 @@ export default function AddBrand() {
       updatedAt: formatNow(),
       createdBy: "You",
     });
+    setName("");
+    setDescription("");
+    setWebsite("");
+    setEmail("");
+    setPhone("");
+    setLogo(null);
+    setLogoFile(null);
+    setErrors({});
     notifySuccess(toast, "Brand created", `"${created.name}" has been added.`);
     navigate(`/brands/${created.id}`);
   };
@@ -72,6 +91,7 @@ export default function AddBrand() {
       setLogo(typeof reader.result === "string" ? reader.result : null);
     };
     reader.readAsDataURL(file);
+    setLogoFile(file);
   };
 
   return (
@@ -101,7 +121,9 @@ export default function AddBrand() {
                     placeholder="e.g. Kapxr Audio, Kapxr Tech"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    className={errors.name ? "border-destructive focus-visible:ring-destructive" : ""}
                   />
+                  {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="brand-desc">Description</Label>
@@ -132,9 +154,10 @@ export default function AddBrand() {
                         placeholder="https://example.com"
                         value={website}
                         onChange={(e) => setWebsite(e.target.value)}
-                        className="pl-9"
+                        className={`pl-9 ${errors.website ? "border-destructive focus-visible:ring-destructive" : ""}`}
                       />
                     </div>
+                    {errors.website && <p className="text-xs text-destructive">{errors.website}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="brand-email">Email</Label>
@@ -145,9 +168,10 @@ export default function AddBrand() {
                         placeholder="brand@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-9"
+                        className={`pl-9 ${errors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
                       />
                     </div>
+                    {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                   </div>
                 </div>
                 <div className="space-y-2 sm:w-1/2">

@@ -20,6 +20,7 @@ import {
   useCreateCategoryMutation,
   useCreateProductMutation,
 } from "@/hooks/usePimQueries";
+import type { PimEntityId } from "@/types/pim";
 
 const assetTypeIcon: Record<string, typeof Image> = { Image, Video: Film, Document: FileText };
 const assetTypeColor: Record<string, string> = {
@@ -66,6 +67,7 @@ export default function AddProduct() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [assetSearch, setAssetSearch] = useState("");
   const [selectedAssets, setSelectedAssets] = useState<typeof digitalAssets>([]);
+  const [errors, setErrors] = useState<{ name?: string; sku?: string; shortDescription?: string; category?: string }>({});
   const createCategoryMutation = useCreateCategoryMutation();
   const createProductMutation = useCreateProductMutation();
 
@@ -103,6 +105,15 @@ export default function AddProduct() {
       },
       {
         onSuccess: () => {
+          setName("");
+          setSku("");
+          setShortDescription("");
+          setLongDescription("");
+          setBrand("");
+          setCategory("");
+          setSelectedAssets([]);
+          setTags([]);
+          setErrors({});
           toast({
             title: "Product created",
             description: `"${name}" has been added successfully.`,
@@ -126,7 +137,7 @@ export default function AddProduct() {
     );
   };
 
-  const removeAsset = (id: number) => {
+  const removeAsset = (id: PimEntityId) => {
     setSelectedAssets((prev) => prev.filter((a) => a.id !== id));
   };
 
@@ -143,10 +154,16 @@ export default function AddProduct() {
   };
 
   const handleSave = () => {
-    if (!name.trim() || !sku.trim()) {
+    const nextErrors: { name?: string; sku?: string; shortDescription?: string; category?: string } = {};
+    if (!name.trim()) nextErrors.name = "Product name is required.";
+    if (!sku.trim()) nextErrors.sku = "SKU is required.";
+    if (!shortDescription.trim()) nextErrors.shortDescription = "Short description is required.";
+    if (!category.trim()) nextErrors.category = "Category is required.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
       toast({
-        title: "Missing required fields",
-        description: "Product Name and SKU are required.",
+        title: "Fix highlighted fields",
+        description: "Please complete required inputs.",
         variant: "destructive",
       });
       return;
@@ -190,11 +207,23 @@ export default function AddProduct() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Product Name <span className="text-destructive">*</span></Label>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter product name" />
+                    <Input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Enter product name"
+                      className={errors.name ? "border-destructive focus-visible:ring-destructive" : ""}
+                    />
+                    {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label>SKU <span className="text-destructive">*</span></Label>
-                    <Input value={sku} onChange={(e) => setSku(e.target.value)} placeholder="e.g. WHP-001" />
+                    <Input
+                      value={sku}
+                      onChange={(e) => setSku(e.target.value)}
+                      placeholder="e.g. WHP-001"
+                      className={errors.sku ? "border-destructive focus-visible:ring-destructive" : ""}
+                    />
+                    {errors.sku && <p className="text-xs text-destructive">{errors.sku}</p>}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -205,7 +234,9 @@ export default function AddProduct() {
                     placeholder="Brief product summary (max 300 characters)"
                     rows={2}
                     maxLength={300}
+                    className={errors.shortDescription ? "border-destructive focus-visible:ring-destructive" : ""}
                   />
+                  {errors.shortDescription && <p className="text-xs text-destructive">{errors.shortDescription}</p>}
                   <p className="text-xs text-muted-foreground">{shortDescription.length}/300 characters</p>
                 </div>
                 <div className="space-y-2">
@@ -454,7 +485,9 @@ export default function AddProduct() {
                         setCategory(value);
                       }}
                     >
-                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                    <SelectTrigger className={errors.category ? "border-destructive focus-visible:ring-destructive" : ""}>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
                     <SelectContent>
                         {categories.map((item) => (
                           <SelectItem key={item.id} value={item.name}>
@@ -470,6 +503,7 @@ export default function AddProduct() {
                         </SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.category && <p className="text-xs text-destructive">{errors.category}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>Brand</Label>

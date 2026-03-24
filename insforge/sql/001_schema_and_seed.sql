@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS brands (
   status TEXT NOT NULL CHECK (status IN ('Active','Inactive')) DEFAULT 'Active',
   products INT NOT NULL DEFAULT 0,
   logo TEXT,
+  logo_url TEXT,
+  logo_object_key TEXT,
+  logo_bucket_name TEXT,
   contact_email TEXT NOT NULL DEFAULT '',
   contact_phone TEXT NOT NULL DEFAULT '',
   country TEXT NOT NULL DEFAULT '',
@@ -83,7 +86,6 @@ CREATE TABLE IF NOT EXISTS assets (
   date TEXT,
   bucket_name TEXT,
   object_key TEXT,
-  url TEXT,
   url TEXT
 );
 

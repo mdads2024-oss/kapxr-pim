@@ -17,6 +17,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { notifySuccess } from "@/lib/notify";
 import type { Brand } from "@/types/pim";
+import { uploadBrandLogo } from "@/services/storage/brandLogoStorage";
 
 const statusColor: Record<string, string> = {
   Active: "bg-success/10 text-success border-success/20",
@@ -60,6 +61,9 @@ export default function BrandDetail() {
         contactPhone: form.contactPhone ?? "",
         country: form.country ?? "",
         logo: form.logo ?? null,
+        logoUrl: form.logoUrl ?? form.logo ?? null,
+        logoObjectKey: form.logoObjectKey ?? null,
+        logoBucketName: form.logoBucketName ?? null,
         status: form.status ?? "Active",
         updatedAt: formatNow(),
       },
@@ -75,6 +79,24 @@ export default function BrandDetail() {
       setForm((f) => ({ ...f, logo: typeof reader.result === "string" ? reader.result : null }));
     };
     reader.readAsDataURL(file);
+    uploadBrandLogo(file)
+      .then((meta) => {
+        setForm((f) => ({
+          ...f,
+          logo: meta.logoUrl,
+          logoUrl: meta.logoUrl,
+          logoObjectKey: meta.logoObjectKey,
+          logoBucketName: meta.logoBucketName,
+        }));
+        notifySuccess(toast, "Logo uploaded", "Saved to storage and ready to persist.");
+      })
+      .catch((error) => {
+        toast({
+          title: "Upload failed",
+          description: error instanceof Error ? error.message : "Could not upload logo",
+          variant: "destructive",
+        });
+      });
   };
 
   if (!id) {

@@ -30,6 +30,9 @@ export interface Brand {
   status: "Active" | "Inactive";
   products: number;
   logo: string | null;
+  logoUrl?: string | null;
+  logoObjectKey?: string | null;
+  logoBucketName?: string | null;
   contactEmail: string;
   contactPhone: string;
   country: string;

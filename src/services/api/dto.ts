@@ -25,6 +25,9 @@ export interface BrandDto {
   status: "Active" | "Inactive";
   products: number;
   logo: string | null;
+  logo_url?: string | null;
+  logo_object_key?: string | null;
+  logo_bucket_name?: string | null;
   contact_email?: string;
   contact_phone?: string;
   country?: string;
