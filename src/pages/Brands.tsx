@@ -81,10 +81,6 @@ export default function Brands() {
     await createBrandMutation.mutateAsync({
       ...rest,
       name: `${b.name} Copy`,
-      uuid:
-        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-          ? crypto.randomUUID()
-          : `brand-${Date.now()}`,
       products: 0,
       updatedAt: formatNow(),
       createdAt: formatNow(),

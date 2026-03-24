@@ -307,14 +307,14 @@ export default function BrandDetail() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="space-y-1">
-                <span className="text-xs font-medium text-muted-foreground">Brand UUID</span>
+                <span className="text-xs font-medium text-muted-foreground">Brand ID</span>
                 <div className="flex items-center gap-2">
                   <Hash className="h-3.5 w-3.5 text-muted-foreground" />
-                  <code className="text-xs bg-muted px-2 py-1 rounded font-mono flex-1 truncate">{b.uuid}</code>
+                  <code className="text-xs bg-muted px-2 py-1 rounded font-mono flex-1 truncate">{b.id}</code>
                   <button
                     type="button"
                     className="text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={() => navigator.clipboard.writeText(b.uuid)}
+                    onClick={() => navigator.clipboard.writeText(b.id)}
                   >
                     <Copy className="h-3 w-3" />
                   </button>
