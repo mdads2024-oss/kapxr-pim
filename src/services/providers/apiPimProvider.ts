@@ -23,6 +23,22 @@ import {
   mapTeamMemberDtoToModel,
 } from "@/services/api/mappers";
 
+const toBrandApiPayload = (data: Record<string, unknown>) => ({
+  uuid: data.uuid,
+  name: data.name,
+  description: data.description,
+  website: data.website,
+  status: data.status,
+  products: data.products,
+  logo: data.logo,
+  country: data.country,
+  contact_email: data.contact_email ?? data.contactEmail,
+  contact_phone: data.contact_phone ?? data.contactPhone,
+  created_at: data.created_at ?? data.createdAt,
+  updated_at: data.updated_at ?? data.updatedAt,
+  created_by: data.created_by ?? data.createdBy,
+});
+
 export const apiPimProvider: PIMProvider = {
   async getProducts() {
     const response = await apiClient.get<ProductDto[]>("/products");
@@ -53,26 +69,12 @@ export const apiPimProvider: PIMProvider = {
     return mapBrandDtoToModel(response);
   },
   async createBrand(data) {
-    const payload = {
-      ...data,
-      contact_email: data.contactEmail,
-      contact_phone: data.contactPhone,
-      created_at: data.createdAt,
-      updated_at: data.updatedAt,
-      created_by: data.createdBy,
-    };
+    const payload = toBrandApiPayload(data as Record<string, unknown>);
     const response = await apiClient.post<BrandDto>("/brands", payload);
     return mapBrandDtoToModel(response);
   },
   async updateBrand(id, data) {
-    const payload = {
-      ...data,
-      contact_email: data.contactEmail,
-      contact_phone: data.contactPhone,
-      created_at: data.createdAt,
-      updated_at: data.updatedAt,
-      created_by: data.createdBy,
-    };
+    const payload = toBrandApiPayload(data as Record<string, unknown>);
     const response = await apiClient.patch<BrandDto>(`/brands/${id}`, payload);
     return mapBrandDtoToModel(response);
   },
