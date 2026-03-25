@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, HashRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -56,59 +57,74 @@ function PublicOnly() {
   return <Outlet />;
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <RouterComponent basename={shouldUseHashRouter ? undefined : routerBasename}>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Navigate to="/signin" replace />} />
+function App() {
+  useEffect(() => {
+    if (!shouldUseHashRouter) return;
+    const currentHash = window.location.hash || "";
+    if (currentHash && currentHash !== "#") return;
 
-          <Route element={<PublicOnly />}>
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-          </Route>
+    const pathname = window.location.pathname || "/";
+    if (pathname && pathname !== "/") {
+      // Convert direct path navigation (e.g. /billing) to hash routing (/#/billing)
+      // so HashRouter can render the correct route.
+      window.location.hash = pathname;
+    }
+  }, []);
 
-          <Route element={<RequireAuth />}>
-            <Route path="/logout" element={<SignOut />} />
-            <Route element={<AuthenticatedLayout />}>
-              <Route path="/app" element={<Index />} />
-              <Route path="/dashboard" element={<Navigate to="/app" replace />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/new" element={<AddProduct />} />
-              <Route path="/products/:id" element={<ProductDetail />} />
-              <Route path="/assets" element={<Assets />} />
-              <Route path="/workflows" element={<Workflow />} />
-              <Route path="/activity" element={<ActivityPage />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/categories/new" element={<AddCategory />} />
-              <Route path="/categories/:slug" element={<CategoryDetail />} />
-              <Route path="/attributes" element={<Attributes />} />
-              <Route path="/attributes/new" element={<AddAttribute />} />
-              <Route path="/attributes/:name" element={<AttributeDetail />} />
-              <Route path="/brands" element={<Brands />} />
-              <Route path="/brands/new" element={<AddBrand />} />
-              <Route path="/brands/:id" element={<BrandDetail />} />
-              <Route path="/integrations" element={<Integrations />} />
-              <Route path="/import-export" element={<ImportExport />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/team" element={<Team />} />
-              <Route path="/help" element={<Help />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/billing" element={<BillingPage />} />
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <RouterComponent basename={shouldUseHashRouter ? undefined : routerBasename}>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Navigate to="/signin" replace />} />
+
+            <Route element={<PublicOnly />}>
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
             </Route>
-          </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </RouterComponent>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+            <Route element={<RequireAuth />}>
+              <Route path="/logout" element={<SignOut />} />
+              <Route element={<AuthenticatedLayout />}>
+                <Route path="/app" element={<Index />} />
+                <Route path="/dashboard" element={<Navigate to="/app" replace />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/products/new" element={<AddProduct />} />
+                <Route path="/products/:id" element={<ProductDetail />} />
+                <Route path="/assets" element={<Assets />} />
+                <Route path="/workflows" element={<Workflow />} />
+                <Route path="/activity" element={<ActivityPage />} />
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/categories/new" element={<AddCategory />} />
+                <Route path="/categories/:slug" element={<CategoryDetail />} />
+                <Route path="/attributes" element={<Attributes />} />
+                <Route path="/attributes/new" element={<AddAttribute />} />
+                <Route path="/attributes/:name" element={<AttributeDetail />} />
+                <Route path="/brands" element={<Brands />} />
+                <Route path="/brands/new" element={<AddBrand />} />
+                <Route path="/brands/:id" element={<BrandDetail />} />
+                <Route path="/integrations" element={<Integrations />} />
+                <Route path="/import-export" element={<ImportExport />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/team" element={<Team />} />
+                <Route path="/help" element={<Help />} />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/billing" element={<BillingPage />} />
+              </Route>
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </RouterComponent>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
