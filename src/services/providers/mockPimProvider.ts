@@ -129,6 +129,11 @@ export const mockPimProvider: PIMProvider = {
     return attributeStorage.remove(id);
   },
 
+  async saveProductAttributeValues() {
+    // Mock mode: attribute values are not persisted.
+    await delay();
+  },
+
   async getIntegrations() {
     return integrationStorage.getAll();
   },

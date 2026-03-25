@@ -351,6 +351,56 @@ module.exports = async function(request) {
     return json((data || [])[0] || null);
   }
 
+  // Store attribute values for a product
+  // POST /products/:id/attribute-values
+  if (route.startsWith("products/") && route.endsWith("/attribute-values") && request.method === "POST") {
+    const productId = segments[1];
+    const body = await parseBody();
+    const incomingValues = Array.isArray(body?.values) ? body.values : [];
+
+    // Replace values atomically: clear then re-insert
+    const { error: deleteError } = await client.database
+      .from("product_attribute_values")
+      .delete()
+      .eq("workspace_id", workspaceId)
+      .eq("product_id", productId);
+    if (deleteError) return json({ error: deleteError.message }, 400);
+
+    const rows = incomingValues
+      .map((v) => {
+        const attributeId = v?.attribute_id ?? v?.attributeId;
+        if (!attributeId) return null;
+        const rawValue = v?.value;
+        const value =
+          rawValue === undefined
+            ? null
+            : typeof rawValue === "string"
+              ? rawValue
+              : JSON.stringify(rawValue);
+        return {
+          workspace_id: workspaceId,
+          product_id: productId,
+          attribute_id: attributeId,
+          value,
+        };
+      })
+      .filter(Boolean);
+
+    if (rows.length > 0) {
+      const { error: insertError } = await client.database.from("product_attribute_values").insert(rows);
+      if (insertError) return json({ error: insertError.message }, 400);
+    }
+
+    const { data, error: selectError } = await client.database
+      .from("product_attribute_values")
+      .select()
+      .eq("workspace_id", workspaceId)
+      .eq("product_id", productId);
+    if (selectError) return json({ error: selectError.message }, 400);
+
+    return json(data || []);
+  }
+
   const tableKey = resource === "team" && segments[1] === "members" ? "team/members" : resource;
   const table = tableMap[tableKey];
   if (!table) {

@@ -97,6 +97,13 @@ export const pimService = {
     return activeProvider.deleteAttribute(id);
   },
 
+  async saveProductAttributeValues(
+    productId: PimEntityId,
+    values: Parameters<PIMProvider["saveProductAttributeValues"]>[1]
+  ) {
+    return activeProvider.saveProductAttributeValues(productId, values);
+  },
+
   async getIntegrations() {
     return activeProvider.getIntegrations();
   },

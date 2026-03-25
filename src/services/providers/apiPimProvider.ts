@@ -41,6 +41,36 @@ const toBrandApiPayload = (data: Record<string, unknown>) => ({
   created_by: data.created_by ?? data.createdBy,
 });
 
+const toAssetApiPayload = (data: Record<string, unknown>) => {
+  const payload: Record<string, unknown> = { ...data };
+  if ("bucketName" in payload) {
+    payload.bucket_name = payload.bucketName;
+    delete payload.bucketName;
+  }
+  if ("objectKey" in payload) {
+    payload.object_key = payload.objectKey;
+    delete payload.objectKey;
+  }
+  return payload;
+};
+
+const toCategoryApiPayload = (data: Record<string, unknown>) => {
+  const payload: Record<string, unknown> = { ...data };
+  if ("imageUrl" in payload) {
+    payload.image_url = payload.imageUrl;
+    delete payload.imageUrl;
+  }
+  if ("imageObjectKey" in payload) {
+    payload.image_object_key = payload.imageObjectKey;
+    delete payload.imageObjectKey;
+  }
+  if ("imageBucketName" in payload) {
+    payload.image_bucket_name = payload.imageBucketName;
+    delete payload.imageBucketName;
+  }
+  return payload;
+};
+
 export const apiPimProvider: PIMProvider = {
   async getProducts() {
     const response = await apiClient.get<ProductDto[]>("/products");
@@ -89,11 +119,13 @@ export const apiPimProvider: PIMProvider = {
     return response.map(mapCategoryDtoToModel);
   },
   async createCategory(data) {
-    const response = await apiClient.post<CategoryDto>("/categories", data);
+    const payload = toCategoryApiPayload(data as Record<string, unknown>);
+    const response = await apiClient.post<CategoryDto>("/categories", payload);
     return mapCategoryDtoToModel(response);
   },
   async updateCategory(id, data) {
-    const response = await apiClient.patch<CategoryDto>(`/categories/${id}`, data);
+    const payload = toCategoryApiPayload(data as Record<string, unknown>);
+    const response = await apiClient.patch<CategoryDto>(`/categories/${id}`, payload);
     return mapCategoryDtoToModel(response);
   },
   async deleteCategory(id) {
@@ -105,11 +137,13 @@ export const apiPimProvider: PIMProvider = {
     return response.map(mapAssetDtoToModel);
   },
   async createAsset(data) {
-    const response = await apiClient.post<AssetDto>("/assets", data);
+    const payload = toAssetApiPayload(data as Record<string, unknown>);
+    const response = await apiClient.post<AssetDto>("/assets", payload);
     return mapAssetDtoToModel(response);
   },
   async updateAsset(id, data) {
-    const response = await apiClient.patch<AssetDto>(`/assets/${id}`, data);
+    const payload = toAssetApiPayload(data as Record<string, unknown>);
+    const response = await apiClient.patch<AssetDto>(`/assets/${id}`, payload);
     return mapAssetDtoToModel(response);
   },
   async deleteAsset(id) {
@@ -131,6 +165,14 @@ export const apiPimProvider: PIMProvider = {
   async deleteAttribute(id) {
     await apiClient.delete(`/attributes/${id}`);
     return true;
+  },
+  async saveProductAttributeValues(productId, values) {
+    await apiClient.post(`/products/${productId}/attribute-values`, {
+      values: values.map((v) => ({
+        attribute_id: v.attributeId,
+        value: v.value,
+      })),
+    });
   },
   async getIntegrations() {
     const response = await apiClient.get<IntegrationDto[]>("/integrations");

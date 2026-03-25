@@ -80,6 +80,7 @@ export default function AddAttribute() {
       type: type as "Text" | "Rich Text" | "Number" | "Select" | "Multi-select",
       group,
       values: showOptions ? options.length : null,
+      options: showOptions ? options : [],
       required,
       categories: selectedCategories,
     });

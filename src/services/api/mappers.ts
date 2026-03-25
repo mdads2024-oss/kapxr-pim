@@ -26,6 +26,7 @@ export const mapProductDtoToModel = (dto: ProductDto): Product => ({
   name: dto.name,
   sku: dto.sku,
   category: dto.category,
+  brand: dto.brand ?? "",
   status: dto.status,
   completeness: dto.completeness,
   channels: dto.channels,
@@ -37,6 +38,9 @@ export const mapCategoryDtoToModel = (dto: CategoryDto): Category => ({
   name: dto.name,
   products: dto.products,
   subcategories: dto.subcategories,
+  imageUrl: dto.image_url ?? null,
+  imageObjectKey: dto.image_object_key ?? null,
+  imageBucketName: dto.image_bucket_name ?? null,
 });
 
 export const mapBrandDtoToModel = (dto: BrandDto): Brand => ({
@@ -67,6 +71,9 @@ export const mapAssetDtoToModel = (dto: AssetDto): Asset => ({
   dimensions: dto.dimensions,
   tags: dto.tags,
   date: dto.date,
+  bucketName: dto.bucket_name ?? null,
+  objectKey: dto.object_key ?? null,
+  url: dto.url ?? null,
 });
 
 export const mapAttributeDtoToModel = (dto: AttributeDto): Attribute => ({
@@ -77,6 +84,7 @@ export const mapAttributeDtoToModel = (dto: AttributeDto): Attribute => ({
   values: dto.values,
   required: dto.required,
   categories: dto.categories,
+  options: dto.options ?? [],
 });
 
 export const mapIntegrationDtoToModel = (dto: IntegrationDto): Integration => ({

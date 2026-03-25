@@ -3,6 +3,7 @@ import { AppLoader } from "@/components/shared/AppLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -42,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AppPagination } from "@/components/shared/AppPagination";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { notifySuccess } from "@/lib/notify";
+import { uploadAssetFile } from "@/services/storage/assetUpload";
 
 const typeIcon: Record<string, typeof Image> = {
   Image: Image,
@@ -63,11 +65,12 @@ export default function Assets() {
   const updateAssetMutation = useUpdateAssetMutation();
   const deleteAssetMutation = useDeleteAssetMutation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "Image" | "Video" | "Document">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "Image" | "Video">("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [assetName, setAssetName] = useState("");
-  const [assetType, setAssetType] = useState<"Image" | "Video" | "Document">("Image");
+  const [assetFile, setAssetFile] = useState<File | null>(null);
+  const [assetType, setAssetType] = useState<"Image" | "Video">("Image");
   const [page, setPage] = useState(1);
   const pageSize = 8;
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
@@ -96,16 +99,43 @@ export default function Assets() {
   }, [filteredAssets, safePage]);
 
   const handleCreateAsset = async () => {
-    if (!assetName.trim()) return;
+    if (!assetFile || !assetName.trim()) return;
+
+    const inferredType: "Image" | "Video" =
+      assetFile.type.startsWith("image/") ? "Image" : assetFile.type.startsWith("video/") ? "Video" : "Image";
+    setAssetType(inferredType);
+
+    const sizeMb = (assetFile.size / (1024 * 1024)).toFixed(1);
+    let dimensions = "–";
+    if (inferredType === "Image") {
+      const url = URL.createObjectURL(assetFile);
+      try {
+        dimensions = await new Promise<string>((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(`${img.naturalWidth}×${img.naturalHeight}`);
+          img.onerror = () => resolve("–");
+          img.src = url;
+        });
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    const uploaded = await uploadAssetFile(assetFile);
     await createAssetMutation.mutateAsync({
       name: assetName.trim(),
-      type: assetType,
-      size: "1.0 MB",
-      dimensions: assetType === "Document" ? "–" : "1920×1080",
+      type: inferredType,
+      size: `${sizeMb} MB`,
+      dimensions,
       tags: ["new"],
       date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      bucketName: uploaded.bucketName,
+      objectKey: uploaded.objectKey,
+      url: uploaded.url,
     });
+
     setAssetName("");
+    setAssetFile(null);
     setAssetType("Image");
     setUploadOpen(false);
     notifySuccess(toast, "Asset added");
@@ -148,7 +178,6 @@ export default function Assets() {
                 <SelectItem value="all">All types</SelectItem>
                 <SelectItem value="Image">Image</SelectItem>
                 <SelectItem value="Video">Video</SelectItem>
-                <SelectItem value="Document">Document</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -247,19 +276,31 @@ export default function Assets() {
                 onChange={(event) => setAssetName(event.target.value)}
                 placeholder="Asset filename"
               />
-              <Select value={assetType} onValueChange={(value) => setAssetType(value as typeof assetType)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Image">Image</SelectItem>
-                  <SelectItem value="Video">Video</SelectItem>
-                  <SelectItem value="Document">Document</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label className="text-sm">Upload file</Label>
+                <Input
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    setAssetFile(file);
+                    if (file) {
+                      setAssetName((prev) => prev || file.name);
+                      if (file.type.startsWith("image/")) setAssetType("Image");
+                      if (file.type.startsWith("video/")) setAssetType("Video");
+                    }
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Uploading as <span className="font-medium">{assetType}</span>
+                </p>
+              </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setUploadOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreateAsset} disabled={!assetName.trim() || createAssetMutation.isPending}>
+                <Button
+                  onClick={handleCreateAsset}
+                  disabled={!assetFile || !assetName.trim() || createAssetMutation.isPending}
+                >
                   Add
                 </Button>
               </div>

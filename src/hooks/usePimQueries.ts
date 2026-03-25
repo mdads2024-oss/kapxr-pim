@@ -208,6 +208,13 @@ export const useDeleteProductMutation = () => {
   });
 };
 
+export const useSaveProductAttributeValuesMutation = () => {
+  return useMutation({
+    mutationFn: (payload: { productId: PimEntityId; values: Array<{ attributeId: PimEntityId; value: unknown }> }) =>
+      pimService.saveProductAttributeValues(payload.productId, payload.values),
+  });
+};
+
 export const useCreateAssetMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({

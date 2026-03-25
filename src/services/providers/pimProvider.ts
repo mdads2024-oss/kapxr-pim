@@ -37,6 +37,12 @@ export interface PIMProvider {
   createAttribute(data: Omit<Attribute, "id">): Promise<Attribute>;
   updateAttribute(id: PimEntityId, data: Partial<Omit<Attribute, "id">>): Promise<Attribute | null>;
   deleteAttribute(id: PimEntityId): Promise<boolean>;
+
+  saveProductAttributeValues(
+    productId: PimEntityId,
+    values: Array<{ attributeId: PimEntityId; value: unknown }>
+  ): Promise<void>;
+
   getIntegrations(): Promise<Integration[]>;
   updateIntegration(id: PimEntityId, data: Partial<Omit<Integration, "id">>): Promise<Integration | null>;
   getImportExportHistory(): Promise<ImportExportHistoryItem[]>;

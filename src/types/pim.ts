@@ -5,6 +5,7 @@ export interface Product {
   name: string;
   sku: string;
   category: string;
+  brand?: string;
   status: "Published" | "In Review" | "Draft";
   completeness: number;
   channels: number;
@@ -19,6 +20,9 @@ export interface Asset {
   dimensions: string;
   tags: string[];
   date: string;
+  bucketName?: string | null;
+  objectKey?: string | null;
+  url?: string | null;
 }
 
 export interface Brand {
@@ -46,6 +50,9 @@ export interface Category {
   name: string;
   products: number;
   subcategories: string[];
+  imageUrl?: string | null;
+  imageObjectKey?: string | null;
+  imageBucketName?: string | null;
 }
 
 export interface Attribute {
@@ -56,6 +63,7 @@ export interface Attribute {
   values: number | null;
   required: boolean;
   categories: string[];
+  options?: string[];
 }
 
 export interface Integration {

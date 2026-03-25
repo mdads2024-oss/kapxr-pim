@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAppPageTitle } from "@/hooks/useAppPageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,9 +16,13 @@ import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import {
   useAssetsQuery,
+  useAttributesQuery,
+  useBrandsQuery,
   useCategoriesQuery,
   useCreateCategoryMutation,
+  useCreateAttributeMutation,
   useCreateProductMutation,
+  useSaveProductAttributeValuesMutation,
 } from "@/hooks/usePimQueries";
 import type { PimEntityId } from "@/types/pim";
 
@@ -29,18 +33,37 @@ const assetTypeColor: Record<string, string> = {
   Document: "bg-warning/10 text-warning",
 };
 
+const attributeGroupOrder = [
+  "Basic Information",
+  "Organization",
+  "Pricing & Inventory",
+  "Physical Details",
+  "Technical Specs",
+  "Visibility",
+] as const;
+
+const attributeTypeOptions: Array<"Text" | "Rich Text" | "Number" | "Select" | "Multi-select"> = [
+  "Text",
+  "Rich Text",
+  "Number",
+  "Select",
+  "Multi-select",
+];
+
 export default function AddProduct() {
   useAppPageTitle("Add Product");
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: digitalAssets = [] } = useAssetsQuery();
   const { data: categories = [] } = useCategoriesQuery();
+  const { data: brands = [] } = useBrandsQuery();
+  const { data: attributes = [] } = useAttributesQuery();
 
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [longDescription, setLongDescription] = useState("");
-  const [brand, setBrand] = useState("");
+  const [brandId, setBrandId] = useState("");
   const [price, setPrice] = useState("");
   const [comparePrice, setComparePrice] = useState("");
   const [barcode, setBarcode] = useState("");
@@ -68,8 +91,24 @@ export default function AddProduct() {
   const [assetSearch, setAssetSearch] = useState("");
   const [selectedAssets, setSelectedAssets] = useState<typeof digitalAssets>([]);
   const [errors, setErrors] = useState<{ name?: string; sku?: string; shortDescription?: string; category?: string }>({});
+  const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
+  const [attributeErrors, setAttributeErrors] = useState<Record<string, string>>({});
+
+  const [attributeModalOpen, setAttributeModalOpen] = useState(false);
+  const [attributeModalGroup, setAttributeModalGroup] = useState("Basic Information");
+  const [newAttributeName, setNewAttributeName] = useState("");
+  const [newAttributeType, setNewAttributeType] = useState<"Text" | "Rich Text" | "Number" | "Select" | "Multi-select">(
+    "Text"
+  );
+  const [newAttributeRequired, setNewAttributeRequired] = useState(false);
+  const [newAttributeOptionsText, setNewAttributeOptionsText] = useState("");
+  const [newAttributeAppliesTo, setNewAttributeAppliesTo] = useState<"all" | "selected">("selected");
   const createCategoryMutation = useCreateCategoryMutation();
   const createProductMutation = useCreateProductMutation();
+  const createAttributeMutation = useCreateAttributeMutation();
+  const saveProductAttributeValuesMutation = useSaveProductAttributeValuesMutation();
+
+  const selectedBrandName = useMemo(() => brands.find((b) => b.id === brandId)?.name ?? "", [brands, brandId]);
 
   const handleCreateCategory = (payload: { name: string }) => {
     createCategoryMutation.mutate(
@@ -92,36 +131,79 @@ export default function AddProduct() {
     );
   };
 
-  const handleCreateProduct = () => {
-    createProductMutation.mutate(
-      {
-        name,
-        sku,
-        category: category || "Uncategorized",
-        status: status as "Published" | "In Review" | "Draft",
-        completeness: 35,
-        channels: 0,
-        image: null,
-      },
-      {
-        onSuccess: () => {
-          setName("");
-          setSku("");
-          setShortDescription("");
-          setLongDescription("");
-          setBrand("");
-          setCategory("");
-          setSelectedAssets([]);
-          setTags([]);
-          setErrors({});
-          toast({
-            title: "Product created",
-            description: `"${name}" has been added successfully.`,
-          });
-          navigate("/products");
-        },
-      }
-    );
+  const handleCreateProduct = async () => {
+    const created = await createProductMutation.mutateAsync({
+      name,
+      sku,
+      category: category || "Uncategorized",
+      brand: selectedBrandName,
+      status: status as "Published" | "In Review" | "Draft",
+      completeness: 35,
+      channels: 0,
+      image: null,
+    });
+
+    const isApplicable = (a: (typeof attributes)[number]) =>
+      a.categories.length === 0 || (category ? a.categories.includes(category) : false);
+
+    const resolveValueForAttribute = (a: (typeof attributes)[number]): string | null => {
+      const attrName = a.name.trim().toLowerCase();
+      if (attrName === "product name") return name || null;
+      if (attrName === "sku") return sku || null;
+      if (attrName === "short description") return shortDescription || null;
+      if (attrName === "long description") return longDescription || null;
+      if (attrName === "brand") return selectedBrandName || null;
+      if (attrName === "category") return category || null;
+
+      const raw = attributeValues[a.id];
+      if (!raw) return null;
+      return a.type === "Multi-select" ? raw : raw.trim() ? raw : null;
+    };
+
+    const valuesToSave = attributes
+      .filter((a) => isApplicable(a))
+      .map((a) => ({ attributeId: a.id, value: resolveValueForAttribute(a) }))
+      .filter((v) => v.value !== null && v.value !== undefined)
+      .map((v) => ({ attributeId: v.attributeId, value: v.value as string }));
+
+    if (valuesToSave.length > 0) {
+      await saveProductAttributeValuesMutation.mutateAsync({
+        productId: created.id,
+        values: valuesToSave,
+      });
+    }
+
+    setName("");
+    setSku("");
+    setShortDescription("");
+    setLongDescription("");
+    setBrandId("");
+    setCategory("");
+    setPrice("");
+    setComparePrice("");
+    setBarcode("");
+    setWeight("");
+    setDimensions("");
+    setMaterial("");
+    setColor("");
+    setConnectivity("");
+    setBatteryLife("");
+    setNoiseCancellation("");
+    setDriverSize("");
+    setFrequencyResponse("");
+    setImpedance("");
+    setWaterproofRating("");
+    setWarranty("");
+    setSelectedAssets([]);
+    setTags([]);
+    setErrors({});
+    setAttributeValues({});
+    setAttributeErrors({});
+    toast({
+      title: "Product created",
+      description: `"${name}" has been added successfully.`,
+    });
+    navigate("/products");
   };
 
   const filteredAssets = digitalAssets.filter((a) =>
@@ -153,14 +235,63 @@ export default function AddProduct() {
     setTags(tags.filter((t) => t !== tag));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const nextErrors: { name?: string; sku?: string; shortDescription?: string; category?: string } = {};
     if (!name.trim()) nextErrors.name = "Product name is required.";
     if (!sku.trim()) nextErrors.sku = "SKU is required.";
     if (!shortDescription.trim()) nextErrors.shortDescription = "Short description is required.";
     if (!category.trim()) nextErrors.category = "Category is required.";
+
+    const isApplicable = (a: (typeof attributes)[number]) =>
+      a.categories.length === 0 || (category ? a.categories.includes(category) : false);
+
+    const nextAttributeErrors: Record<string, string> = {};
+
+    attributes
+      .filter((a) => a.required && isApplicable(a))
+      .forEach((a) => {
+        const attrName = a.name.trim().toLowerCase();
+        let value: string | null = null;
+
+        if (attrName === "product name") value = name || null;
+        else if (attrName === "sku") value = sku || null;
+        else if (attrName === "short description") value = shortDescription || null;
+        else if (attrName === "long description") value = longDescription || null;
+        else if (attrName === "brand") value = selectedBrandName || null;
+        else if (attrName === "category") value = category || null;
+        else if (a.type === "Multi-select") {
+          const raw = attributeValues[a.id];
+          if (raw) {
+            try {
+              const arr = JSON.parse(raw);
+              value = Array.isArray(arr) && arr.length > 0 ? raw : null;
+            } catch {
+              value = raw.trim() ? raw : null;
+            }
+          }
+        } else value = attributeValues[a.id] || null;
+
+        const isMissing =
+          a.type === "Multi-select"
+            ? (() => {
+                const raw = attributeValues[a.id];
+                if (!raw) return true;
+                try {
+                  const arr = JSON.parse(raw);
+                  return !Array.isArray(arr) || arr.length === 0;
+                } catch {
+                  return !(raw || "").trim();
+                }
+              })()
+            : !value || !String(value).trim();
+
+        if (isMissing) nextAttributeErrors[a.id] = `${a.name} is required.`;
+      });
+
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) {
+    setAttributeErrors(nextAttributeErrors);
+
+    if (Object.keys(nextErrors).length > 0 || Object.keys(nextAttributeErrors).length > 0) {
       toast({
         title: "Fix highlighted fields",
         description: "Please complete required inputs.",
@@ -168,7 +299,33 @@ export default function AddProduct() {
       });
       return;
     }
-    handleCreateProduct();
+
+    await handleCreateProduct();
+  };
+
+  const isAttributeApplicableToSelectedCategory = (a: (typeof attributes)[number]) =>
+    !category.trim() ? true : a.categories.length === 0 || a.categories.includes(category);
+
+  const shouldSkipAttributeFromProductForm = (a: (typeof attributes)[number]) => {
+    const n = a.name.trim().toLowerCase();
+    return (
+      n === "product name" ||
+      n === "sku" ||
+      n === "short description" ||
+      n === "long description" ||
+      n === "brand" ||
+      n === "category"
+    );
+  };
+
+  const parseMultiSelectValue = (raw: string | undefined) => {
+    if (!raw) return [] as string[];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as string[]) : [];
+    } catch {
+      return [];
+    }
   };
 
   return (
@@ -342,6 +499,195 @@ export default function AddProduct() {
 
             <Card>
               <CardHeader className="pb-3">
+                <CardTitle className="text-base">Attributes by Group</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {attributeGroupOrder.map((groupName) => {
+                  const shownAttributes = attributes
+                    .filter((a) => a.group === groupName)
+                    .filter((a) => isAttributeApplicableToSelectedCategory(a))
+                    .filter((a) => !shouldSkipAttributeFromProductForm(a));
+
+                  return (
+                    <div key={groupName} className="space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-sm">{groupName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {shownAttributes.length} attribute{shownAttributes.length === 1 ? "" : "s"}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setAttributeModalGroup(groupName);
+                            setAttributeModalOpen(true);
+                            setNewAttributeName("");
+                            setNewAttributeType("Text");
+                            setNewAttributeRequired(false);
+                            setNewAttributeOptionsText("");
+                            setNewAttributeAppliesTo(category ? "selected" : "all");
+                          }}
+                          className="shrink-0"
+                        >
+                          <Plus className="h-3.5 w-3.5 mr-1" />
+                          Add Attribute
+                        </Button>
+                      </div>
+
+                      {shownAttributes.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No attributes for this group.</p>
+                      ) : (
+                        <div className="space-y-4">
+                          {shownAttributes.map((a) => {
+                            const error = attributeErrors[a.id];
+                            const className = error ? "border-destructive focus-visible:ring-destructive" : "";
+
+                            if (a.type === "Text") {
+                              return (
+                                <div key={a.id} className="space-y-2">
+                                  <Label>
+                                    {a.name}
+                                    {a.required && <span className="text-destructive">*</span>}
+                                  </Label>
+                                  <Input
+                                    value={attributeValues[a.id] ?? ""}
+                                    onChange={(e) =>
+                                      setAttributeValues((prev) => ({ ...prev, [a.id]: e.target.value }))
+                                    }
+                                    placeholder={`Enter ${a.name}`}
+                                    className={className}
+                                  />
+                                  {error && <p className="text-xs text-destructive">{error}</p>}
+                                </div>
+                              );
+                            }
+
+                            if (a.type === "Rich Text") {
+                              return (
+                                <div key={a.id} className="space-y-2">
+                                  <Label>
+                                    {a.name}
+                                    {a.required && <span className="text-destructive">*</span>}
+                                  </Label>
+                                  <Textarea
+                                    value={attributeValues[a.id] ?? ""}
+                                    onChange={(e) =>
+                                      setAttributeValues((prev) => ({ ...prev, [a.id]: e.target.value }))
+                                    }
+                                    placeholder={`Enter ${a.name}`}
+                                    rows={4}
+                                    className={className}
+                                  />
+                                  {error && <p className="text-xs text-destructive">{error}</p>}
+                                </div>
+                              );
+                            }
+
+                            if (a.type === "Number") {
+                              return (
+                                <div key={a.id} className="space-y-2">
+                                  <Label>
+                                    {a.name}
+                                    {a.required && <span className="text-destructive">*</span>}
+                                  </Label>
+                                  <Input
+                                    type="number"
+                                    value={attributeValues[a.id] ?? ""}
+                                    onChange={(e) =>
+                                      setAttributeValues((prev) => ({ ...prev, [a.id]: e.target.value }))
+                                    }
+                                    placeholder={`Enter ${a.name}`}
+                                    className={className}
+                                  />
+                                  {error && <p className="text-xs text-destructive">{error}</p>}
+                                </div>
+                              );
+                            }
+
+                            if (a.type === "Select") {
+                              return (
+                                <div key={a.id} className="space-y-2">
+                                  <Label>
+                                    {a.name}
+                                    {a.required && <span className="text-destructive">*</span>}
+                                  </Label>
+                                  <Select
+                                    value={attributeValues[a.id] ?? ""}
+                                    onValueChange={(value) =>
+                                      setAttributeValues((prev) => ({ ...prev, [a.id]: value }))
+                                    }
+                                  >
+                                    <SelectTrigger className={className}>
+                                      <SelectValue placeholder={`Select ${a.name}`} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {(a.options ?? []).map((opt) => (
+                                        <SelectItem key={opt} value={opt}>
+                                          {opt}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  {error && <p className="text-xs text-destructive">{error}</p>}
+                                </div>
+                              );
+                            }
+
+                            if (a.type === "Multi-select") {
+                              const selected = parseMultiSelectValue(attributeValues[a.id]);
+                              return (
+                                <div key={a.id} className="space-y-2">
+                                  <Label>
+                                    {a.name}
+                                    {a.required && <span className="text-destructive">*</span>}
+                                  </Label>
+                                  <div className={`flex flex-wrap gap-2 rounded-md p-2 border ${error ? "border-destructive" : "border-border"}`}>
+                                    {(a.options ?? []).length === 0 ? (
+                                      <p className="text-xs text-muted-foreground">No options configured.</p>
+                                    ) : (
+                                      (a.options ?? []).map((opt) => {
+                                        const isSelected = selected.includes(opt);
+                                        return (
+                                          <button
+                                            key={opt}
+                                            type="button"
+                                            onClick={() => {
+                                              const next = isSelected
+                                                ? selected.filter((x) => x !== opt)
+                                                : [...selected, opt];
+                                              setAttributeValues((prev) => ({ ...prev, [a.id]: JSON.stringify(next) }));
+                                            }}
+                                            className={`px-2 py-1 text-xs rounded border transition-colors ${
+                                              isSelected
+                                                ? "border-primary bg-primary/10 text-primary"
+                                                : "border-border bg-card hover:bg-muted"
+                                            }`}
+                                          >
+                                            {opt}
+                                          </button>
+                                        );
+                                      })
+                                    )}
+                                  </div>
+                                  {error && <p className="text-xs text-destructive">{error}</p>}
+                                </div>
+                              );
+                            }
+
+                            return null;
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-base">Pricing & Inventory</CardTitle>
               </CardHeader>
               <CardContent>
@@ -507,7 +853,18 @@ export default function AddProduct() {
                 </div>
                 <div className="space-y-2">
                   <Label>Brand</Label>
-                  <Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="e.g. Kapxr Audio" />
+                  <Select value={brandId} onValueChange={setBrandId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select brand" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brands.map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Separator />
                 <div className="space-y-2">
@@ -535,6 +892,45 @@ export default function AddProduct() {
 
             <Card>
               <CardHeader className="pb-3">
+                <CardTitle className="text-base">Category Attributes</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {!category.trim() ? (
+                  <p className="text-sm text-muted-foreground">Select a category to see its attributes.</p>
+                ) : (() => {
+                  const attrsForCategory = attributes.filter((a) => a.categories.includes(category));
+                  if (attrsForCategory.length === 0) {
+                    return <p className="text-sm text-muted-foreground">No attributes configured for this category.</p>;
+                  }
+
+                  const byGroup: Record<string, (typeof attrsForCategory)[number][]> = {};
+                  attrsForCategory.forEach((a) => {
+                    byGroup[a.group] = byGroup[a.group] || [];
+                    byGroup[a.group].push(a);
+                  });
+
+                  return (
+                    <div className="space-y-4">
+                      {Object.entries(byGroup).map(([group, groupAttrs]) => (
+                        <div key={group} className="space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">{group}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {groupAttrs.map((a) => (
+                              <Badge key={a.id} variant="secondary" className="text-xs">
+                                {a.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-base">Visibility</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -551,6 +947,132 @@ export default function AddProduct() {
           </div>
         </div>
       </motion.div>
+
+      <Dialog open={attributeModalOpen} onOpenChange={setAttributeModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create Attribute</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Attribute name *</Label>
+              <Input
+                value={newAttributeName}
+                onChange={(e) => setNewAttributeName(e.target.value)}
+                placeholder="e.g. Battery Life"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Type *</Label>
+                <Select
+                  value={newAttributeType}
+                  onValueChange={(v) => setNewAttributeType(v as (typeof attributeTypeOptions)[number])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {attributeTypeOptions.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Group</Label>
+                <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                  {attributeModalGroup}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label>Required</Label>
+                <p className="text-xs text-muted-foreground">Must be filled when creating a product</p>
+              </div>
+              <Switch checked={newAttributeRequired} onCheckedChange={setNewAttributeRequired} />
+            </div>
+
+            {(newAttributeType === "Select" || newAttributeType === "Multi-select") && (
+              <div className="space-y-2">
+                <Label>Options (comma-separated) *</Label>
+                <Input
+                  value={newAttributeOptionsText}
+                  onChange={(e) => setNewAttributeOptionsText(e.target.value)}
+                  placeholder="e.g. Low, Medium, High"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Applies to category</Label>
+              <Select
+                value={newAttributeAppliesTo}
+                onValueChange={(v) => setNewAttributeAppliesTo(v as "all" | "selected")}
+                disabled={!category.trim()}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose scope" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All categories</SelectItem>
+                  <SelectItem value="selected" disabled={!category.trim()}>
+                    Selected category ({category || "—"})
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setAttributeModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  const trimmedName = newAttributeName.trim();
+                  if (!trimmedName) return;
+
+                  const optionList =
+                    newAttributeType === "Select" || newAttributeType === "Multi-select"
+                      ? newAttributeOptionsText
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter(Boolean)
+                      : [];
+
+                  const categoriesPayload =
+                    newAttributeAppliesTo === "selected" && category.trim() ? [category] : [];
+
+                  await createAttributeMutation.mutateAsync({
+                    name: trimmedName,
+                    type: newAttributeType,
+                    group: attributeModalGroup,
+                    required: newAttributeRequired,
+                    categories: categoriesPayload,
+                    values: optionList.length > 0 ? optionList.length : null,
+                    options: optionList,
+                  });
+
+                  setAttributeModalOpen(false);
+                  setNewAttributeName("");
+                  setNewAttributeOptionsText("");
+                }}
+                disabled={!newAttributeName.trim() || createAttributeMutation.isPending}
+              >
+                Create
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={categoryCreateOpen} onOpenChange={setCategoryCreateOpen}>
         <DialogContent>
           <DialogHeader>

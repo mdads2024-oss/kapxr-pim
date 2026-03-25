@@ -3,6 +3,7 @@ export interface ProductDto {
   name: string;
   sku: string;
   category: string;
+  brand?: string;
   status: "Published" | "In Review" | "Draft";
   completeness: number;
   channels: number;
@@ -14,6 +15,9 @@ export interface CategoryDto {
   name: string;
   products: number;
   subcategories: string[];
+  image_url?: string | null;
+  image_object_key?: string | null;
+  image_bucket_name?: string | null;
 }
 
 export interface BrandDto {
@@ -49,6 +53,9 @@ export interface AssetDto {
   dimensions: string;
   tags: string[];
   date: string;
+  bucket_name?: string | null;
+  object_key?: string | null;
+  url?: string | null;
 }
 
 export interface AttributeDto {
@@ -59,6 +66,7 @@ export interface AttributeDto {
   values: number | null;
   required: boolean;
   categories: string[];
+  options?: string[];
 }
 
 export interface IntegrationDto {

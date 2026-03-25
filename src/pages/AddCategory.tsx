@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useCategoriesQuery, useCreateCategoryMutation } from "@/hooks/usePimQueries";
+import { uploadCategoryImage } from "@/services/storage/categoryImageStorage";
 
 export default function AddCategory() {
   useAppPageTitle("Create New Category");
@@ -28,8 +29,8 @@ export default function AddCategory() {
   const [showInNav, setShowInNav] = useState(true);
   const [subcategoryInput, setSubcategoryInput] = useState("");
   const [subcategories, setSubcategories] = useState<string[]>([]);
-  const [metaTitle, setMetaTitle] = useState("");
-  const [metaDescription, setMetaDescription] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
   const handleNameChange = (value: string) => {
     setName(value);
@@ -57,10 +58,19 @@ export default function AddCategory() {
       });
       return;
     }
+
+    const imageMeta = imageFile ? await uploadCategoryImage(imageFile) : null;
     await createCategoryMutation.mutateAsync({
       name,
       products: 0,
       subcategories,
+      ...(imageMeta
+        ? {
+            imageUrl: imageMeta.imageUrl,
+            imageObjectKey: imageMeta.imageObjectKey,
+            imageBucketName: imageMeta.imageBucketName,
+          }
+        : {}),
     });
     toast({
       title: "Category created",
@@ -182,39 +192,29 @@ export default function AddCategory() {
               </CardHeader>
               <CardContent>
                 <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm font-medium">Drop an image here or click to upload</p>
-                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 2MB. Recommended: 800×800px</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* SEO */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base">SEO</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="meta-title">Meta Title</Label>
+                  {imagePreviewUrl ? (
+                    <img
+                      src={imagePreviewUrl}
+                      alt="Category preview"
+                      className="mx-auto h-28 w-28 object-cover rounded-lg border bg-card"
+                    />
+                  ) : (
+                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  )}
+                  <p className="text-sm font-medium">Upload image</p>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WebP (up to 5MB)</p>
                   <Input
-                    id="meta-title"
-                    placeholder="SEO-friendly title"
-                    value={metaTitle}
-                    onChange={(e) => setMetaTitle(e.target.value)}
+                    type="file"
+                    accept="image/*"
+                    className="mt-3"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      setImageFile(file);
+                      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+                      if (file) setImagePreviewUrl(URL.createObjectURL(file));
+                      else setImagePreviewUrl(null);
+                    }}
                   />
-                  <p className="text-xs text-muted-foreground">{metaTitle.length}/60 characters</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="meta-desc">Meta Description</Label>
-                  <Textarea
-                    id="meta-desc"
-                    placeholder="Brief description for search engines..."
-                    value={metaDescription}
-                    onChange={(e) => setMetaDescription(e.target.value)}
-                    rows={2}
-                  />
-                  <p className="text-xs text-muted-foreground">{metaDescription.length}/160 characters</p>
                 </div>
               </CardContent>
             </Card>
